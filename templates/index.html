@@ -1,227 +1,223 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de Horarios — Inicio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css">
 
-{% block title %} — Inicio{% endblock %}
+  <!-- SheetJS: equivale a openpyxl, lee el Excel en el navegador -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
 
-{% block body %}
 <div class="page-index">
 
   <!-- ═══ HEADER ═══ -->
-    <div class="idx-header">
-        <div class="idx-logo">
-            <img src="{{ url_for('static', filename='img/512x512.png') }}"
-                 alt="Logo"
-                 class="logo-app-img">
-            <div>
-                <div class="logo-title">Generador de Horarios</div>
-                <div class="logo-sub">Planifica tu horario</div>
-            </div>
+  <div class="idx-header">
+    <div class="idx-logo">
+      <img src="static/img/512x512.png" alt="Logo" class="logo-app-img">
+      <div>
+        <div class="logo-title">Generador de Horarios</div>
+        <div class="logo-sub">Planifica tu horario</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BODY ═══ -->
+  <div class="idx-body">
+
+    <!-- ── CARD 1: SUBIR CARGA HORARIA ── -->
+    <div class="idx-card">
+      <div class="card-title">📁 Subir carga horaria</div>
+      <div class="card-desc">Sube el archivo .xlsx con los horarios disponibles</div>
+
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".xlsx,.xls">
+        <div class="upload-icon">📄</div>
+        <div class="upload-label">
+          <strong>Click para seleccionar archivo</strong>
+          Formatos: .xlsx, .xls
         </div>
+      </div>
+
+      <div id="fileInfo" class="file-badge" style="display:none"></div>
+
+      <button id="btnUpload" class="btn-primary" disabled>
+        Cargar archivo
+      </button>
+
+      <div id="uploadStatus" class="upload-status"></div>
     </div>
 
-    <!-- ═══ BODY ═══ -->
-    <div class="idx-body">
+    <!-- ── CARD 2: SELECCIONAR CURSOS ── -->
+    <!-- Empieza oculta, JS la muestra después de cargar el Excel -->
+    <div class="idx-card" id="cardCursos" style="display:none">
+      <div class="card-title">📚 Seleccionar cursos</div>
+      <div class="card-desc">Busca y elige los cursos que deseas incluir</div>
 
-        <!-- ── CARD 1: SUBIR CARGA HORARIA ── -->
-        <div class="idx-card">
-            <div class="card-title">📁 Subir carga horaria</div>
-            <div class="card-desc">Sube el archivo .xlsx con los horarios disponibles</div>
+      <div class="search-wrap">
+        <input type="text" id="courseSearch" class="search-input"
+               placeholder="Buscar curso por nombre...">
+        <button id="clearSearch" class="clear-search-btn">✕</button>
+      </div>
 
-            <form onsubmit="handleUpload(event)">
-                <div class="upload-zone" id="uploadZone">
-                    <input type="file" id="fileInput" accept=".xlsx,.xls">
-                    <div class="upload-icon">📄</div>
-                    <div class="upload-label">
-                        <strong>Click para seleccionar archivo</strong>
-                        Formatos: .xlsx, .xls
-                    </div>
-                </div>
+      <!-- JS llenará esta lista con los cursos del Excel -->
+      <div class="cursos-lista" id="cursosLista"></div>
 
-                <div id="fileInfo" class="file-badge" style="display:none"></div>
-
-                <button type="submit" id="btnUpload" class="btn-primary" disabled>
-                    Cargar archivo
-                </button>
-            </form>
-
-            <div id="uploadStatus" class="upload-status"></div>
+      <div class="seleccionados-wrap">
+        <div class="sel-header">
+          <span class="sel-label">Seleccionados</span>
+          <span class="sel-count" id="selCount">0</span>
         </div>
-
-        <!-- ── CARD 2: SELECCIONAR CURSOS ── -->
-        {% if cargado %}
-        <div class="idx-card">
-            <div class="card-title">📚 Seleccionar cursos</div>
-            <div class="card-desc">Busca y elige los cursos que deseas incluir</div>
-
-            <div class="search-wrap">
-                <input type="text"
-                       id="courseSearch"
-                       class="search-input"
-                       placeholder="Buscar curso por nombre...">
-                <button id="clearSearch" class="clear-search-btn">✕</button>
-            </div>
-
-            <div class="cursos-lista">
-                {% for nombre in cursos_nombres %}
-                <div class="curso-item"
-                     onclick="toggleCursoSeleccionado(this, '{{ nombre }}')">
-                    <span class="curso-nombre">{{ nombre }}</span>
-                    <span class="curso-check">✔</span>
-                </div>
-                {% endfor %}
-            </div>
-
-            <div class="seleccionados-wrap">
-                <div class="sel-header">
-                    <span class="sel-label">Seleccionados</span>
-                    <span class="sel-count" id="selCount">0</span>
-                </div>
-                <button id="btnNext" class="btn-primary btn-next" disabled>
-                    Generar horarios →
-                </button>
-            </div>
-        </div>
-
-        {% endif %}
-
+        <button id="btnNext" class="btn-primary btn-next" disabled>
+          Generar horarios →
+        </button>
+      </div>
     </div>
+
+  </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
+<!-- ═══ FIRMA ═══ -->
+<footer class="harry-footer">
+  <img src="static/img/harry.png" alt="Harry" class="harry-footer-img">
+  <span class="harry-footer-text">by Harry</span>
+</footer>
+
+<!-- ── Scripts ── -->
+<!-- parser.js debe cargarse antes que este script -->
+<script src="static/js/parser.js"></script>
+
 <script>
-    const fileInput    = document.getElementById('fileInput');
-    const btnUpload    = document.getElementById('btnUpload');
-    const fileInfo     = document.getElementById('fileInfo');
-    const uploadStatus = document.getElementById('uploadStatus');
-    const courseSearch  = document.getElementById('courseSearch');
-    const clearSearch  = document.getElementById('clearSearch');
-    const uploadZone   = document.getElementById('uploadZone');
+  // ── Referencias al DOM ──────────────────────────────────
+  const fileInput    = document.getElementById('fileInput');
+  const btnUpload    = document.getElementById('btnUpload');
+  const fileInfo     = document.getElementById('fileInfo');
+  const uploadStatus = document.getElementById('uploadStatus');
+  const uploadZone   = document.getElementById('uploadZone');
+  const cardCursos   = document.getElementById('cardCursos');
+  const cursosLista  = document.getElementById('cursosLista');
+  const courseSearch = document.getElementById('courseSearch');
+  const clearSearch  = document.getElementById('clearSearch');
 
-    let cursosSeleccionados = new Set();
-    let seleccionadosCount  = 0;
+  // Almacena la carga horaria parseada y los cursos seleccionados
+  // Equivale a carga_horaria = {} en app.py
+  let cargaGlobal         = null;
+  let cursosSeleccionados = new Set();
 
-    // ── 1. Archivo: nombre + habilitar botón ───────────────
-    if (fileInput) {
-        fileInput.onchange = () => {
-            if (fileInput.files.length > 0) {
-                const name = fileInput.files[0].name;
-                if (fileInfo) {
-                    fileInfo.style.display = 'flex';
-                    fileInfo.innerHTML     = '📄 ' + name;
-                }
-                if (uploadZone) uploadZone.classList.add('active');
-                if (btnUpload) btnUpload.disabled = false;
-            }
-        };
+  // ── 1. Archivo seleccionado: muestra nombre y habilita botón ──
+  fileInput.onchange = () => {
+    if (fileInput.files.length > 0) {
+      const name = fileInput.files[0].name;
+      fileInfo.style.display = 'flex';
+      fileInfo.innerHTML     = '📄 ' + name;
+      uploadZone.classList.add('active');
+      btnUpload.disabled = false;
+    }
+  };
+
+  // ── 2. Cargar archivo: llama a parsearExcel() de parser.js ──
+  // Antes hacía fetch('/upload') al servidor Flask.
+  // Ahora parsearExcel() lee el archivo directo en el navegador.
+  btnUpload.onclick = () => {
+    if (!fileInput.files.length) return;
+
+    const file     = fileInput.files[0];
+    btnUpload.disabled = true;
+    fileInfo.style.display = 'flex';
+    fileInfo.innerHTML     = '⏳ Cargando: ' + file.name;
+    uploadStatus.innerHTML = '<span class="spinner"></span> Procesando archivo...';
+
+    // parsearExcel devuelve una Promise (igual que una petición al servidor)
+    parsearExcel(file)
+      .then(carga => {
+        cargaGlobal = carga;
+
+        // Guarda la carga en sessionStorage para que generador.html la use
+        // Equivale a carga_horaria = {} en memoria del servidor Flask
+        sessionStorage.setItem('cargaHoraria', JSON.stringify(carga));
+
+        const cursos = Object.keys(carga).sort();
+        uploadStatus.innerHTML =
+          `<span style="color:#10b981">✅ ¡Éxito! ${cursos.length} cursos cargados.</span>`;
+
+        // Construye la lista de cursos — equivale al {% for %} de Jinja
+        construirListaCursos(cursos);
+        cardCursos.style.display = 'block';
+      })
+      .catch(err => {
+        uploadStatus.innerHTML =
+          `<span style="color:#ef4444">❌ ${err}</span>`;
+        btnUpload.disabled = false;
+      });
+  };
+
+  // ── 3. Construir lista de cursos dinámicamente ──────────
+  // Equivale al {% for nombre in cursos_nombres %} de Jinja
+  function construirListaCursos(cursos) {
+    cursosLista.innerHTML = '';
+    cursos.forEach(nombre => {
+      const div = document.createElement('div');
+      div.className = 'curso-item';
+      div.innerHTML = `
+        <span class="curso-nombre">${nombre}</span>
+        <span class="curso-check">✔</span>
+      `;
+      div.onclick = () => toggleCursoSeleccionado(div, nombre);
+      cursosLista.appendChild(div);
+    });
+  }
+
+  // ── 4. Buscador: filtrar cursos por nombre ──────────────
+  courseSearch.addEventListener('input', e => {
+    const q = e.target.value.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    clearSearch.style.display = q.length > 0 ? 'block' : 'none';
+    document.querySelectorAll('.curso-item').forEach(item => {
+      const texto = item.querySelector('.curso-nombre').innerText.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      item.style.display = texto.includes(q) ? 'flex' : 'none';
+    });
+  });
+
+  clearSearch.onclick = () => {
+    courseSearch.value = '';
+    clearSearch.style.display = 'none';
+    document.querySelectorAll('.curso-item').forEach(item => {
+      item.style.display = 'flex';
+    });
+    courseSearch.focus();
+  };
+
+  // ── 5. Selección de cursos: toggle ✔ y contador ─────────
+  function toggleCursoSeleccionado(elemento, nombre) {
+    const checkIcon        = elemento.querySelector('.curso-check');
+    const estaSeleccionado = elemento.classList.toggle('seleccionado');
+
+    if (estaSeleccionado) {
+      checkIcon.style.display = 'inline';
+      cursosSeleccionados.add(nombre);
+    } else {
+      checkIcon.style.display = 'none';
+      cursosSeleccionados.delete(nombre);
     }
 
-    // ── 2. Upload: ⏳ → ✅ → recarga ──────────────────────
-    function handleUpload(event) {
-        event.preventDefault();
-        if (!fileInput || !fileInput.files.length) return;
+    document.getElementById('selCount').innerText = cursosSeleccionados.size;
+    document.getElementById('btnNext').disabled   = cursosSeleccionados.size === 0;
+  }
 
-        const fileName = fileInput.files[0].name;
-        const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
-
-        if (btnUpload) btnUpload.disabled = true;
-        if (fileInfo) {
-            fileInfo.style.display = 'flex';
-            fileInfo.innerHTML     = '⏳ Cargando: ' + fileName;
-        }
-        if (uploadStatus) {
-            uploadStatus.innerHTML =
-                '<span class="spinner"></span> Procesando archivo...';
-        }
-
-        fetch('/upload', { method: 'POST', body: formData })
-            .then(res => res.json())
-            .then(data => {
-                if (data.ok) {
-                    if (uploadStatus) {
-                        uploadStatus.innerHTML =
-                            '<span style="color:#10b981">✅ ¡Éxito! ' +
-                            data.total + ' cursos cargados.</span>';
-                    }
-                    setTimeout(() => window.location.reload(), 600);
-                } else {
-                    if (uploadStatus) {
-                        uploadStatus.innerHTML =
-                            '<span style="color:#ef4444">❌ ' + data.error + '</span>';
-                    }
-                    if (btnUpload) btnUpload.disabled = false;
-                }
-            })
-            .catch(() => {
-                if (uploadStatus) {
-                    uploadStatus.innerHTML =
-                        '<span style="color:#ef4444">❌ Error de conexión</span>';
-                }
-                if (btnUpload) btnUpload.disabled = false;
-            });
-    }
-
-    // ── 3. Buscador: filtrar + botón X ─────────────────────
-    if (courseSearch) {
-        courseSearch.addEventListener('input', (e) => {
-            const q = e.target.value.toLowerCase()
-                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            if (clearSearch) {
-                clearSearch.style.display = q.length > 0 ? 'block' : 'none';
-            }
-            document.querySelectorAll('.curso-item').forEach(item => {
-                const nombreEl = item.querySelector('.curso-nombre');
-                if (!nombreEl) return;
-                const texto = nombreEl.innerText.toLowerCase()
-                                .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                item.style.display = texto.includes(q) ? 'flex' : 'none';
-            });
-        });
-    }
-
-    if (clearSearch) {
-        clearSearch.onclick = () => {
-            courseSearch.value = '';
-            clearSearch.style.display = 'none';
-            document.querySelectorAll('.curso-item').forEach(item => {
-                item.style.display = 'flex';
-            });
-            courseSearch.focus();
-        };
-    }
-
-    // ── 4. Selección: ✔ check verde + contador ─────────────
-    function toggleCursoSeleccionado(elemento, nombre) {
-        const checkIcon = elemento.querySelector('.curso-check');
-        if (!checkIcon) return;
-
-        const estaSeleccionado = elemento.classList.toggle('seleccionado');
-
-        if (estaSeleccionado) {
-            checkIcon.style.display = 'inline';
-            cursosSeleccionados.add(nombre);
-            seleccionadosCount++;
-        } else {
-            checkIcon.style.display = 'none';
-            cursosSeleccionados.delete(nombre);
-            seleccionadosCount--;
-        }
-
-        const selCount = document.getElementById('selCount');
-        const btnNext  = document.getElementById('btnNext');
-        if (selCount) selCount.innerText = seleccionadosCount;
-        if (btnNext)  btnNext.disabled   = (seleccionadosCount === 0);
-    }
-
-    // ── 5. Ir al generador ─────────────────────────────────
-    const btnNext = document.getElementById('btnNext');
-    if (btnNext) {
-        btnNext.onclick = () => {
-            if (!cursosSeleccionados.size) return;
-            const params = new URLSearchParams();
-            cursosSeleccionados.forEach(c => params.append('curso', c));
-            window.location.href = '/generador?' + params.toString();
-        };
-    }
+  // ── 6. Ir al generador ──────────────────────────────────
+  // Antes era window.location.href = '/generador?curso=...'
+  // Ahora pasa los cursos por URL igual, generador.html los lee
+  document.getElementById('btnNext').onclick = () => {
+    if (!cursosSeleccionados.size) return;
+    const params = new URLSearchParams();
+    cursosSeleccionados.forEach(c => params.append('curso', c));
+    window.location.href = 'generador.html?' + params.toString();
+  };
 </script>
-{% endblock %}
+
+</body>
+</html>

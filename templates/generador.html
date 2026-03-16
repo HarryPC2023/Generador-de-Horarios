@@ -1,131 +1,141 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+  <link rel="manifest" href="manifest.json">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Generador de Horarios — Generador</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="static/css/style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
+
 <body>
 
-<div class="gen-layout">
+  <div class="gen-layout">
 
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <img src="static/img/512x512.png" alt="Logo" class="logo-icon-img">
-        <span class="sidebar-logo-text">Generador de Horarios</span>
-      </div>
-      <!-- Antes era href="/" (ruta Flask), ahora apunta al archivo directamente -->
-      <a href="index.html" class="back-btn">← Volver</a>
-    </div>
-
-    <div class="sidebar-scroll">
-      <div class="sb-section">
-        <div class="step-label">01 — Secciones por curso</div>
-        <div id="listaCursos">
-          <div class="sb-loading">Cargando secciones...</div>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <img src="static/img/512x512.png" alt="Logo" class="logo-icon-img">
+          <span class="sidebar-logo-text">Generador de Horarios</span>
         </div>
+        <!-- Antes era href="/" (ruta Flask), ahora apunta al archivo directamente -->
+        <a href="index.html" class="back-btn">← Volver</a>
       </div>
 
-      <div class="sb-section">
-        <div class="step-label">02 — Cruces permitidos</div>
-        <div class="crossings-row">
-          <div class="crossings-label">
-            <strong>Cantidad de cruces</strong>
-            Solo aplica a teoría
+      <div class="sidebar-scroll">
+        <div class="sb-section">
+          <div class="step-label">01 — Secciones por curso</div>
+          <div id="listaCursos">
+            <div class="sb-loading">Cargando secciones...</div>
           </div>
-          <div class="crossings-spinner">
-            <input type="number" class="spinner-input" id="crucesInput"
-                   min="0" max="6" value="0"
-                   oninput="setCruces(parseInt(this.value)||0)">
-            <div class="spinner-btns">
-              <button class="spinner-btn" onclick="setCruces(maxCruces-1)">−</button>
-              <button class="spinner-btn" onclick="setCruces(maxCruces+1)">+</button>
+        </div>
+
+        <div class="sb-section">
+          <div class="step-label">02 — Cruces permitidos</div>
+          <div class="crossings-row">
+            <div class="crossings-label">
+              <strong>Cantidad de cruces</strong>
+              Solo aplica a teoría
+            </div>
+            <div class="crossings-spinner">
+              <input type="number" class="spinner-input" id="crucesInput" min="0" max="6" value="0"
+                oninput="setCruces(parseInt(this.value)||0)">
+              <div class="spinner-btns">
+                <button class="spinner-btn" onclick="setCruces(maxCruces-1)">−</button>
+                <button class="spinner-btn" onclick="setCruces(maxCruces+1)">+</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <div class="sidebar-footer">
+        <button class="btn-gen" onclick="generar()">⚡ Generar Horarios</button>
+      </div>
     </div>
 
-    <div class="sidebar-footer">
-      <button class="btn-gen" onclick="generar()">⚡ Generar Horarios</button>
-    </div>
-  </div>
-
-  <!-- MAIN -->
-  <div class="main">
-    <div class="topbar">
-      <div class="topbar-title" id="topbarTitle">Configura tus preferencias y genera</div>
-      <div class="topbar-actions">
-        <div class="nav-controls" id="navControls" style="display:none">
-          <button class="btn-nav" onclick="cambiar(-1)">◀</button>
-          <div class="counter-pill" id="counter">1 / 1</div>
-          <button class="btn-nav" onclick="cambiar(1)">▶</button>
+    <!-- MAIN -->
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title" id="topbarTitle">Configura tus preferencias y genera</div>
+        <div class="topbar-actions">
+          <div class="nav-controls" id="navControls" style="display:none">
+            <button class="btn-nav" onclick="cambiar(-1)">◀</button>
+            <div class="counter-pill" id="counter">1 / 1</div>
+            <button class="btn-nav" onclick="cambiar(1)">▶</button>
+          </div>
+          <button class="btn-action" id="btnFav" onclick="guardarFavorito()" style="display:none"
+            title="Guardar como favorito">★ Guardar</button>
+          <button class="btn-action btn-export" id="btnExport" onclick="exportarImagen()" style="display:none"
+            title="Exportar como imagen">⬇ Exportar</button>
+          <button class="btn-action btn-favs" onclick="toggleFavoritos()" title="Ver favoritos">☆ Favoritos</button>
         </div>
-        <button class="btn-action" id="btnFav" onclick="guardarFavorito()"
-                style="display:none" title="Guardar como favorito">★ Guardar</button>
-        <button class="btn-action btn-export" id="btnExport" onclick="exportarImagen()"
-                style="display:none" title="Exportar como imagen">⬇ Exportar</button>
-        <button class="btn-action btn-favs" onclick="toggleFavoritos()"
-                title="Ver favoritos">☆ Favoritos</button>
+      </div>
+
+      <div class="calendar-wrap" id="calendarWrap">
+        <div class="empty-state">
+          <div class="empty-icon">🗓</div>
+          <div class="empty-text">Tu horario aparecerá aquí</div>
+          <div class="empty-sub">Selecciona secciones y pulsa Generar</div>
+        </div>
       </div>
     </div>
 
-    <div class="calendar-wrap" id="calendarWrap">
-      <div class="empty-state">
-        <div class="empty-icon">🗓</div>
-        <div class="empty-text">Tu horario aparecerá aquí</div>
-        <div class="empty-sub">Selecciona secciones y pulsa Generar</div>
-      </div>
+  </div>
+
+  <!-- Panel Favoritos -->
+  <div class="favs-panel" id="favsPanel" style="display:none">
+    <div class="favs-header">
+      <span>☆ Mis Favoritos</span>
+      <button onclick="toggleFavoritos()">×</button>
     </div>
+    <div class="favs-list" id="favsList"></div>
   </div>
+  <div class="favs-overlay" id="favsOverlay" onclick="toggleFavoritos()" style="display:none"></div>
 
-</div>
+  <div class="toast" id="toast"></div>
 
-<!-- Panel Favoritos -->
-<div class="favs-panel" id="favsPanel" style="display:none">
-  <div class="favs-header">
-    <span>☆ Mis Favoritos</span>
-    <button onclick="toggleFavoritos()">×</button>
-  </div>
-  <div class="favs-list" id="favsList"></div>
-</div>
-<div class="favs-overlay" id="favsOverlay"
-     onclick="toggleFavoritos()" style="display:none"></div>
+  <!-- ═══ FIRMA ═══ -->
+  <footer class="harry-footer">
+    <img src="static/img/harry.png" alt="Harry" class="harry-footer-img">
+    <span class="harry-footer-text">by Harry</span>
+  </footer>
 
-<div class="toast" id="toast"></div>
+  <!-- ── Scripts ── -->
+  <!-- El orden importa: parser y scheduler deben ir antes que generador.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="static/js/parser.js"></script>
+  <script src="static/js/scheduler.js"></script>
+  <script src="static/js/generador.js"></script>
+  <script>
+    // Recupera los cursos seleccionados de la URL
+    // Funciona igual que antes: index.html los pasa por ?curso=...
+    const params = new URLSearchParams(window.location.search);
+    const cursosSeleccionados = params.getAll('curso');
 
-<!-- ═══ FIRMA ═══ -->
-<footer class="harry-footer">
-  <img src="static/img/harry.png" alt="Harry" class="harry-footer-img">
-  <span class="harry-footer-text">by Harry</span>
-</footer>
+    // Recupera la carga horaria guardada por index.html en sessionStorage
+    // Equivale a carga_horaria en memoria del servidor Flask
+    const cargaGuardada = sessionStorage.getItem('cargaHoraria');
+    if (cargaGuardada) {
+      cargaGlobal = JSON.parse(cargaGuardada);
+    }
 
-<!-- ── Scripts ── -->
-<!-- El orden importa: parser y scheduler deben ir antes que generador.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="static/js/parser.js"></script>
-<script src="static/js/scheduler.js"></script>
-<script src="static/js/generador.js"></script>
-<script>
-  // Recupera los cursos seleccionados de la URL
-  // Funciona igual que antes: index.html los pasa por ?curso=...
-  const params = new URLSearchParams(window.location.search);
-  const cursosSeleccionados = params.getAll('curso');
-
-  // Recupera la carga horaria guardada por index.html en sessionStorage
-  // Equivale a carga_horaria en memoria del servidor Flask
-  const cargaGuardada = sessionStorage.getItem('cargaHoraria');
-  if (cargaGuardada) {
-    cargaGlobal = JSON.parse(cargaGuardada);
-  }
-
-  inicializar(cursosSeleccionados);
-</script>
-
+    inicializar(cursosSeleccionados);
+  </script>
+  <!-- ── Registro PWA ── -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('SW registrado'))
+        .catch(err => console.warn('SW error:', err));
+    }
+  </script>
 </body>
+
 </html>

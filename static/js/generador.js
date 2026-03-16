@@ -16,7 +16,12 @@ let currentIndex = 0;
 let maxCruces = 0;
 let seccionesData = {};
 
-// ── TOOLTIP (solo en página del generador) ────────────────────
+// cargaGlobal viene de generador.html (recuperada de sessionStorage)
+// Es el equivalente de carga_horaria en app.py
+// Se declara aquí como let por si no fue definida antes
+if (typeof cargaGlobal === 'undefined') var cargaGlobal = null;
+
+// ── TOOLTIP ───────────────────────────────────────────────────
 let tooltipEl = null;
 document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('calendarWrap')) {
@@ -30,31 +35,40 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── INICIALIZAR ───────────────────────────────────────────────
-async function inicializar(cursos) {
+// Antes hacía fetch('/secciones') al servidor Flask.
+// Ahora lee directamente de cargaGlobal (que viene de sessionStorage).
+function inicializar(cursos) {
   if (!cursos || !cursos.length) {
-    window.location.href = '/';
+    window.location.href = 'index.html';
     return;
   }
 
+  // Si no hay carga horaria en memoria, el usuario llegó sin pasar por index
+  if (!cargaGlobal) {
+    document.getElementById('listaCursos').innerHTML =
+      '<div style="color:#ef4444;font-size:12px">Sin datos. <a href="index.html">Vuelve al inicio</a> y carga el Excel.</div>';
+    return;
+  }
+
+  // Asigna un color a cada curso — igual que antes
   cursos.forEach((c, i) => {
     courseColors[c] = PALETTE[i % PALETTE.length];
   });
 
-  try {
-    const res = await fetch('/secciones', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cursos })
-    });
-    seccionesData = await res.json();
-    renderSidebar(seccionesData);
-  } catch (e) {
-    document.getElementById('listaCursos').innerHTML =
-      '<div style="color:#ef4444;font-size:12px">Error cargando secciones. Vuelve al inicio.</div>';
-  }
+  // Construye seccionesData filtrando solo los cursos seleccionados
+  // Equivale a la respuesta que antes daba fetch('/secciones')
+  seccionesData = {};
+  cursos.forEach(curso => {
+    if (curso in cargaGlobal) {
+      seccionesData[curso] = cargaGlobal[curso];
+    }
+  });
+
+  renderSidebar(seccionesData);
 }
 
 // ── SIDEBAR: RENDER SECCIONES ─────────────────────────────────
+// Sin cambios — ya recibía el objeto seccionesData igual que antes
 function renderSidebar(data) {
   const container = document.getElementById('listaCursos');
   container.innerHTML = '';
@@ -82,14 +96,16 @@ function renderSidebar(data) {
       const label = document.createElement('label');
       label.className = 'prof-option';
       const cb = document.createElement('input');
-      cb.type = 'checkbox'; cb.className = 'p-check';
+      cb.type = 'checkbox';
+      cb.className = 'p-check';
       cb.dataset.curso = curso;
       cb.dataset.seccion = sec;
       cb.value = sec;
       cb.checked = true;
       const span = document.createElement('span');
       span.innerHTML = `<strong>Sección ${sec}</strong> — ${docente}`;
-      label.appendChild(cb); label.appendChild(span);
+      label.appendChild(cb);
+      label.appendChild(span);
       profsDiv.appendChild(label);
     });
 
@@ -105,6 +121,7 @@ function renderSidebar(data) {
 }
 
 // ── CRUCES ────────────────────────────────────────────────────
+// Sin cambios
 function setCruces(v) {
   v = Math.min(6, Math.max(0, isNaN(v) ? 0 : Math.round(v)));
   maxCruces = v;
@@ -113,7 +130,9 @@ function setCruces(v) {
 }
 
 // ── GENERAR ───────────────────────────────────────────────────
-async function generar() {
+// Antes hacía fetch('/generar') al servidor Flask.
+// Ahora llama a prepararOpciones() y generarCombos() de scheduler.js.
+function generar() {
   const seleccion = {};
   document.querySelectorAll('.p-check').forEach(cb => {
     if (!seleccion[cb.dataset.curso]) seleccion[cb.dataset.curso] = [];
@@ -121,56 +140,51 @@ async function generar() {
   });
 
   if (!Object.keys(seleccion).length) {
-    showToast('Selecciona al menos una sección', 'error'); return;
+    showToast('Selecciona al menos una sección', 'error');
+    return;
   }
 
   document.getElementById('topbarTitle').innerHTML =
     '<span class="spinner"></span> Generando combinaciones...';
 
-  try {
-    const res = await fetch('/generar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ seleccion, max_cruces: maxCruces })
-    });
-    const data = await res.json();
+  // Usa setTimeout para que el spinner se muestre antes de que
+  // el backtracking bloquee el hilo — mismo efecto visual que antes
+  setTimeout(() => {
+    try {
+      // prepararOpciones y generarCombos vienen de scheduler.js
+      const opciones = prepararOpciones(seleccion, cargaGlobal);
+      combosValidos = generarCombos(opciones, maxCruces);
 
-    if (!data.ok) {
+      if (!combosValidos.length) {
+        document.getElementById('topbarTitle').innerHTML =
+          '<span style="color:#ef4444">0 combinaciones</span> — sube los cruces o selecciona más secciones';
+        document.getElementById('navControls').style.display = 'none';
+        document.getElementById('btnFav').style.display = 'none';
+        document.getElementById('btnExport').style.display = 'none';
+        document.getElementById('calendarWrap').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">😕</div>
+            <div class="empty-text">Sin combinaciones posibles</div>
+            <div class="empty-sub">Aumenta los cruces o selecciona más secciones</div>
+          </div>`;
+        return;
+      }
+
+      currentIndex = 0;
+      document.getElementById('navControls').style.display = 'flex';
+      document.getElementById('btnFav').style.display = 'inline-flex';
+      document.getElementById('btnExport').style.display = 'inline-flex';
+      dibujar(0);
+
+    } catch (e) {
       document.getElementById('topbarTitle').innerHTML =
-        `<span style="color:#ef4444">Error:</span> ${data.error}`;
-      return;
+        '<span style="color:#ef4444">Error al generar combinaciones</span>';
     }
-
-    combosValidos = data.combos;
-
-    if (!combosValidos.length) {
-      document.getElementById('topbarTitle').innerHTML =
-        `<span style="color:#ef4444">0 combinaciones</span> — sube los cruces o selecciona más secciones`;
-      document.getElementById('navControls').style.display = 'none';
-      document.getElementById('btnFav').style.display = 'none';
-      document.getElementById('btnExport').style.display = 'none';
-      document.getElementById('calendarWrap').innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">😕</div>
-          <div class="empty-text">Sin combinaciones posibles</div>
-          <div class="empty-sub">Aumenta los cruces o selecciona más secciones</div>
-        </div>`;
-      return;
-    }
-
-    currentIndex = 0;
-    document.getElementById('navControls').style.display = 'flex';
-    document.getElementById('btnFav').style.display = 'inline-flex';
-    document.getElementById('btnExport').style.display = 'inline-flex';
-    dibujar(0);
-
-  } catch (e) {
-    document.getElementById('topbarTitle').innerHTML =
-      '<span style="color:#ef4444">Error de conexión</span>';
-  }
+  }, 50);
 }
 
 // ── DIBUJAR CALENDARIO ────────────────────────────────────────
+// Sin cambios — recibía combo con la misma estructura que ahora
 function dibujar(idx) {
   const combo = combosValidos[idx];
   document.getElementById('counter').textContent = `${idx + 1} / ${combosValidos.length}`;
@@ -258,8 +272,7 @@ function dibujar(idx) {
         right: auto;
         width: calc(${pct}% - ${slot > 0 ? gap + 1 : 3}px);
         background: ${color}33;
-        border-left-color: ${color};
-      `;
+        border-left-color: ${color};`;
       block.innerHTML = `
         <div class="cb-name">${sec.nombre}</div>
         <div class="cb-bottom">
@@ -306,21 +319,19 @@ function hideTip() {
 }
 
 // ── FAVORITOS ─────────────────────────────────────────────────
-async function guardarFavorito() {
+// Antes hacía fetch('/favoritos') al servidor Flask.
+// Ahora usa el objeto Favoritos de scheduler.js.
+function guardarFavorito() {
   if (!combosValidos.length) return;
   const combo = combosValidos[currentIndex];
   const nombre = prompt('Nombre para este horario:', `Opción ${currentIndex + 1}`);
   if (!nombre) return;
 
-  await fetch('/favoritos', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ combo, nombre })
-  });
+  Favoritos.agregar(combo, nombre);
   showToast('Horario guardado en favoritos ★', 'success');
 }
 
-async function toggleFavoritos() {
+function toggleFavoritos() {
   const panel = document.getElementById('favsPanel');
   const overlay = document.getElementById('favsOverlay');
   const visible = panel.style.display !== 'none';
@@ -331,13 +342,12 @@ async function toggleFavoritos() {
   } else {
     panel.style.display = 'flex';
     overlay.style.display = 'block';
-    await cargarFavoritos();
+    renderFavoritos();
   }
 }
 
-async function cargarFavoritos() {
-  const res = await fetch('/favoritos');
-  const favs = await res.json();
+function renderFavoritos() {
+  const favs = Favoritos.obtener();
   const lista = document.getElementById('favsList');
 
   if (!favs.length) {
@@ -360,9 +370,8 @@ async function cargarFavoritos() {
   }).join('');
 }
 
-async function verFavorito(idx) {
-  const res = await fetch('/favoritos');
-  const favs = await res.json();
+function verFavorito(idx) {
+  const favs = Favoritos.obtener();
   if (!favs[idx]) return;
 
   combosValidos = [favs[idx].combo];
@@ -374,13 +383,14 @@ async function verFavorito(idx) {
   dibujar(0);
 }
 
-async function eliminarFavorito(idx) {
-  await fetch(`/favoritos/${idx}`, { method: 'DELETE' });
-  await cargarFavoritos();
+function eliminarFavorito(idx) {
+  Favoritos.eliminar(idx);
+  renderFavoritos();
   showToast('Favorito eliminado', 'error');
 }
 
 // ── EXPORTAR IMAGEN ───────────────────────────────────────────
+// Sin cambios
 async function exportarImagen() {
   const tabla = document.querySelector('.sched-table');
   if (!tabla) { showToast('Genera un horario primero', 'error'); return; }
@@ -390,8 +400,7 @@ async function exportarImagen() {
       backgroundColor: '#ffffff',
       scale: 2,
       useCORS: true,
-      scrollX: 0,
-      scrollY: 0,
+      scrollX: 0, scrollY: 0,
       width: tabla.scrollWidth,
       height: tabla.scrollHeight
     });
@@ -406,6 +415,7 @@ async function exportarImagen() {
 }
 
 // ── TOAST ─────────────────────────────────────────────────────
+// Sin cambios
 function showToast(msg, type = 'info') {
   const t = document.getElementById('toast');
   if (!t) return;

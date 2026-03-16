@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block title %} — Inicio{% endblock %}
+
+{% block body %}
+<div class="page-index">
+
+  <!-- ═══ HEADER ═══ -->
+    <div class="idx-header">
+        <div class="idx-logo">
+            <img src="{{ url_for('static', filename='img/512x512.png') }}"
+                 alt="Logo"
+                 class="logo-app-img">
+            <div>
+                <div class="logo-title">Generador de Horarios</div>
+                <div class="logo-sub">Planifica tu horario</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ BODY ═══ -->
+    <div class="idx-body">
+
+        <!-- ── CARD 1: SUBIR CARGA HORARIA ── -->
+        <div class="idx-card">
+            <div class="card-title">📁 Subir carga horaria</div>
+            <div class="card-desc">Sube el archivo .xlsx con los horarios disponibles</div>
+
+            <form onsubmit="handleUpload(event)">
+                <div class="upload-zone" id="uploadZone">
+                    <input type="file" id="fileInput" accept=".xlsx,.xls">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-label">
+                        <strong>Click para seleccionar archivo</strong>
+                        Formatos: .xlsx, .xls
+                    </div>
+                </div>
+
+                <div id="fileInfo" class="file-badge" style="display:none"></div>
+
+                <button type="submit" id="btnUpload" class="btn-primary" disabled>
+                    Cargar archivo
+                </button>
+            </form>
+
+            <div id="uploadStatus" class="upload-status"></div>
+        </div>
+
+        <!-- ── CARD 2: SELECCIONAR CURSOS ── -->
+        {% if cargado %}
+        <div class="idx-card">
+            <div class="card-title">📚 Seleccionar cursos</div>
+            <div class="card-desc">Busca y elige los cursos que deseas incluir</div>
+
+            <div class="search-wrap">
+                <input type="text"
+                       id="courseSearch"
+                       class="search-input"
+                       placeholder="Buscar curso por nombre...">
+                <button id="clearSearch" class="clear-search-btn">✕</button>
+            </div>
+
+            <div class="cursos-lista">
+                {% for nombre in cursos_nombres %}
+                <div class="curso-item"
+                     onclick="toggleCursoSeleccionado(this, '{{ nombre }}')">
+                    <span class="curso-nombre">{{ nombre }}</span>
+                    <span class="curso-check">✔</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="seleccionados-wrap">
+                <div class="sel-header">
+                    <span class="sel-label">Seleccionados</span>
+                    <span class="sel-count" id="selCount">0</span>
+                </div>
+                <button id="btnNext" class="btn-primary btn-next" disabled>
+                    Generar horarios →
+                </button>
+            </div>
+        </div>
+
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const fileInput    = document.getElementById('fileInput');
+    const btnUpload    = document.getElementById('btnUpload');
+    const fileInfo     = document.getElementById('fileInfo');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const courseSearch  = document.getElementById('courseSearch');
+    const clearSearch  = document.getElementById('clearSearch');
+    const uploadZone   = document.getElementById('uploadZone');
+
+    let cursosSeleccionados = new Set();
+    let seleccionadosCount  = 0;
+
+    // ── 1. Archivo: nombre + habilitar botón ───────────────
+    if (fileInput) {
+        fileInput.onchange = () => {
+            if (fileInput.files.length > 0) {
+                const name = fileInput.files[0].name;
+                if (fileInfo) {
+                    fileInfo.style.display = 'flex';
+                    fileInfo.innerHTML     = '📄 ' + name;
+                }
+                if (uploadZone) uploadZone.classList.add('active');
+                if (btnUpload) btnUpload.disabled = false;
+            }
+        };
+    }
+
+    // ── 2. Upload: ⏳ → ✅ → recarga ──────────────────────
+    function handleUpload(event) {
+        event.preventDefault();
+        if (!fileInput || !fileInput.files.length) return;
+
+        const fileName = fileInput.files[0].name;
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        if (btnUpload) btnUpload.disabled = true;
+        if (fileInfo) {
+            fileInfo.style.display = 'flex';
+            fileInfo.innerHTML     = '⏳ Cargando: ' + fileName;
+        }
+        if (uploadStatus) {
+            uploadStatus.innerHTML =
+                '<span class="spinner"></span> Procesando archivo...';
+        }
+
+        fetch('/upload', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    if (uploadStatus) {
+                        uploadStatus.innerHTML =
+                            '<span style="color:#10b981">✅ ¡Éxito! ' +
+                            data.total + ' cursos cargados.</span>';
+                    }
+                    setTimeout(() => window.location.reload(), 600);
+                } else {
+                    if (uploadStatus) {
+                        uploadStatus.innerHTML =
+                            '<span style="color:#ef4444">❌ ' + data.error + '</span>';
+                    }
+                    if (btnUpload) btnUpload.disabled = false;
+                }
+            })
+            .catch(() => {
+                if (uploadStatus) {
+                    uploadStatus.innerHTML =
+                        '<span style="color:#ef4444">❌ Error de conexión</span>';
+                }
+                if (btnUpload) btnUpload.disabled = false;
+            });
+    }
+
+    // ── 3. Buscador: filtrar + botón X ─────────────────────
+    if (courseSearch) {
+        courseSearch.addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase()
+                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            if (clearSearch) {
+                clearSearch.style.display = q.length > 0 ? 'block' : 'none';
+            }
+            document.querySelectorAll('.curso-item').forEach(item => {
+                const nombreEl = item.querySelector('.curso-nombre');
+                if (!nombreEl) return;
+                const texto = nombreEl.innerText.toLowerCase()
+                                .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                item.style.display = texto.includes(q) ? 'flex' : 'none';
+            });
+        });
+    }
+
+    if (clearSearch) {
+        clearSearch.onclick = () => {
+            courseSearch.value = '';
+            clearSearch.style.display = 'none';
+            document.querySelectorAll('.curso-item').forEach(item => {
+                item.style.display = 'flex';
+            });
+            courseSearch.focus();
+        };
+    }
+
+    // ── 4. Selección: ✔ check verde + contador ─────────────
+    function toggleCursoSeleccionado(elemento, nombre) {
+        const checkIcon = elemento.querySelector('.curso-check');
+        if (!checkIcon) return;
+
+        const estaSeleccionado = elemento.classList.toggle('seleccionado');
+
+        if (estaSeleccionado) {
+            checkIcon.style.display = 'inline';
+            cursosSeleccionados.add(nombre);
+            seleccionadosCount++;
+        } else {
+            checkIcon.style.display = 'none';
+            cursosSeleccionados.delete(nombre);
+            seleccionadosCount--;
+        }
+
+        const selCount = document.getElementById('selCount');
+        const btnNext  = document.getElementById('btnNext');
+        if (selCount) selCount.innerText = seleccionadosCount;
+        if (btnNext)  btnNext.disabled   = (seleccionadosCount === 0);
+    }
+
+    // ── 5. Ir al generador ─────────────────────────────────
+    const btnNext = document.getElementById('btnNext');
+    if (btnNext) {
+        btnNext.onclick = () => {
+            if (!cursosSeleccionados.size) return;
+            const params = new URLSearchParams();
+            cursosSeleccionados.forEach(c => params.append('curso', c));
+            window.location.href = '/generador?' + params.toString();
+        };
+    }
+</script>
+{% endblock %}

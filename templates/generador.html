@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %} — Generador{% endblock %}
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+{% endblock %}
+
+{% block body %}
+<div class="gen-layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <img src="{{ url_for('static', filename='img/512x512.png') }}"
+             alt="Logo" class="logo-icon-img">
+        <span class="sidebar-logo-text">Generador de Horarios</span>
+      </div>
+      <a href="/" class="back-btn">← Volver</a>
+    </div>
+
+    <div class="sidebar-scroll">
+      <div class="sb-section">
+        <div class="step-label">01 — Secciones por curso</div>
+        <div id="listaCursos">
+          <div class="sb-loading">Cargando secciones...</div>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="step-label">02 — Cruces permitidos</div>
+        <div class="crossings-row">
+          <div class="crossings-label">
+            <strong>Cantidad de cruces</strong>
+            Solo aplica a teoría
+          </div>
+          <div class="crossings-spinner">
+            <input type="number" class="spinner-input" id="crucesInput"
+                   min="0" max="6" value="0"
+                   oninput="setCruces(parseInt(this.value)||0)">
+            <div class="spinner-btns">
+              <button class="spinner-btn" onclick="setCruces(maxCruces-1)">−</button>
+              <button class="spinner-btn" onclick="setCruces(maxCruces+1)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="btn-gen" onclick="generar()">⚡ Generar Horarios</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">Configura tus preferencias y genera</div>
+      <div class="topbar-actions">
+        <div class="nav-controls" id="navControls" style="display:none">
+          <button class="btn-nav" onclick="cambiar(-1)">◀</button>
+          <div class="counter-pill" id="counter">1 / 1</div>
+          <button class="btn-nav" onclick="cambiar(1)">▶</button>
+        </div>
+        <button class="btn-action" id="btnFav" onclick="guardarFavorito()" style="display:none"
+                title="Guardar como favorito">★ Guardar</button>
+        <button class="btn-action btn-export" id="btnExport" onclick="exportarImagen()" style="display:none"
+                title="Exportar como imagen">⬇ Exportar</button>
+        <button class="btn-action btn-favs" onclick="toggleFavoritos()"
+                title="Ver favoritos">☆ Favoritos</button>
+      </div>
+    </div>
+
+    <div class="calendar-wrap" id="calendarWrap">
+      <div class="empty-state">
+        <div class="empty-icon">🗓</div>
+        <div class="empty-text">Tu horario aparecerá aquí</div>
+        <div class="empty-sub">Selecciona secciones y pulsa Generar</div>
+      </div>
+    </div>
+
+    <!-- ⚠️ SE ELIMINÓ gen-footer DE AQUÍ -->
+
+  </div>
+
+</div>
+
+<!-- Panel Favoritos -->
+<div class="favs-panel" id="favsPanel" style="display:none">
+  <div class="favs-header">
+    <span>☆ Mis Favoritos</span>
+    <button onclick="toggleFavoritos()">×</button>
+  </div>
+  <div class="favs-list" id="favsList"></div>
+</div>
+<div class="favs-overlay" id="favsOverlay" onclick="toggleFavoritos()" style="display:none"></div>
+
+<div class="toast" id="toast"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/generador.js') }}"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const cursosSeleccionados = params.getAll('curso');
+  inicializar(cursosSeleccionados);
+</script>
+{% endblock %}

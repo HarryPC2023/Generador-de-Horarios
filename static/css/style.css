@@ -26,6 +26,13 @@ body {
   overflow: hidden;
 }
 
+html:has(body.page-index-body),
+body.page-index-body {
+  overflow-y: auto;
+  height: auto;
+  min-height: 100%;
+}
+
 *,
 *::before,
 *::after {
@@ -1343,4 +1350,13 @@ body {
   .cb-badge {
     font-size: 7px;
   }
+}
+
+/* ── Scroll para página de inicio ── */
+/* ── Scroll para página de inicio ── */
+html:has(body.page-index-body),
+body.page-index-body {
+  overflow-y: auto !important;
+  height: auto !important;
+  min-height: 100%;
 }

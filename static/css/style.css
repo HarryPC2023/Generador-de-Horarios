@@ -535,6 +535,7 @@ body {
 
 .sidebar-footer {
   padding: 14px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--border);
 }
 
@@ -1331,6 +1332,10 @@ body {
     padding: 1px 3px;
     border-left-width: 2px;
   }
+
+  .sidebar-footer {
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
 }
 
 /* ── Pantallas muy pequeñas ── */
@@ -1377,9 +1382,10 @@ body.page-index-body {
   height: auto !important;
   min-height: 100%;
 }
+
 /* ── Ocultar firma en la pantalla de inicio ── */
 .page-index-body .harry-footer {
-    display: none;
+  display: none;
 }
 
 /* ── Scrollbar visible en page-index-body ── */

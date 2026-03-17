@@ -105,6 +105,17 @@
         let cargaGlobal = null;
         let cursosSeleccionados = new Set();
 
+        // ── Recuperar carga horaria si ya existe en sessionStorage ──
+        const cargaGuardada = sessionStorage.getItem('cargaHoraria');
+        if (cargaGuardada) {
+            cargaGlobal = JSON.parse(cargaGuardada);
+            const cursos = Object.keys(cargaGlobal).sort();
+            uploadStatus.innerHTML =
+                `<span style="color:#10b981">✅ ${cursos.length} cursos cargados. Puedes seleccionar más.</span>`;
+            construirListaCursos(cursos);
+            cardCursos.style.display = 'block';
+        }
+
         // ── 1. Archivo seleccionado: muestra nombre y habilita botón ──
         fileInput.onchange = () => {
             if (fileInput.files.length > 0) {

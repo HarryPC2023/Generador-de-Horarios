@@ -252,11 +252,20 @@ body {
 }
 
 .cursos-lista {
-  max-height: 260px;
+  max-height: 300px;
   overflow-y: auto;
   margin-bottom: 14px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
+}
+
+.cursos-lista::-webkit-scrollbar {
+  width: 5px;
+}
+
+.cursos-lista::-webkit-scrollbar-thumb {
+  background: var(--text-faint);
+  border-radius: 4px;
 }
 
 .cursos-lista:empty {
@@ -1353,10 +1362,14 @@ body {
 }
 
 /* ── Scroll para página de inicio ── */
-/* ── Scroll para página de inicio ── */
+
 html:has(body.page-index-body),
 body.page-index-body {
   overflow-y: auto !important;
   height: auto !important;
   min-height: 100%;
+}
+/* ── Ocultar firma en la pantalla de inicio ── */
+.page-index-body .harry-footer {
+    display: none;
 }

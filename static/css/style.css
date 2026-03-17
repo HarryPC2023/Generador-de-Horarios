@@ -28,6 +28,13 @@ body {
 
 html:has(body.page-index-body),
 body.page-index-body {
+  overflow-y: auto !important;
+  height: auto !important;
+  min-height: 100%;
+}
+
+html:has(body.page-index-body),
+body.page-index-body {
   overflow-y: auto;
   height: auto;
   min-height: 100%;

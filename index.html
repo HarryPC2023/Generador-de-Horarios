@@ -106,14 +106,42 @@
         let cursosSeleccionados = new Set();
 
         // ── Recuperar carga horaria si ya existe en sessionStorage ──
+        // ── Recuperar carga horaria y selección previa al volver ──
         const cargaGuardada = sessionStorage.getItem('cargaHoraria');
+        const nombreArchivo = sessionStorage.getItem('nombreArchivo');
+        const seleccionPrevia = sessionStorage.getItem('cursosSeleccionados');
+
         if (cargaGuardada) {
             cargaGlobal = JSON.parse(cargaGuardada);
             const cursos = Object.keys(cargaGlobal).sort();
+
+            // Restaura el badge con el nombre del archivo
+            if (nombreArchivo) {
+                fileInfo.style.display = 'flex';
+                fileInfo.innerHTML = '📄 ' + nombreArchivo;
+            }
+
             uploadStatus.innerHTML =
                 `<span style="color:#10b981">✅ ${cursos.length} cursos cargados. Puedes seleccionar más.</span>`;
+
             construirListaCursos(cursos);
             cardCursos.style.display = 'block';
+
+            // Restaura los cursos que ya estaban seleccionados
+            if (seleccionPrevia) {
+                const seleccionados = JSON.parse(seleccionPrevia);
+                seleccionados.forEach(nombre => {
+                    cursosSeleccionados.add(nombre);
+                    document.querySelectorAll('.curso-item').forEach(item => {
+                        if (item.querySelector('.curso-nombre').innerText === nombre) {
+                            item.classList.add('seleccionado');
+                            item.querySelector('.curso-check').style.display = 'inline';
+                        }
+                    });
+                });
+                document.getElementById('selCount').innerText = cursosSeleccionados.size;
+                document.getElementById('btnNext').disabled = cursosSeleccionados.size === 0;
+            }
         }
 
         // ── 1. Archivo seleccionado: muestra nombre y habilita botón ──
@@ -147,6 +175,7 @@
                     // Guarda la carga en sessionStorage para que generador.html la use
                     // Equivale a carga_horaria = {} en memoria del servidor Flask
                     sessionStorage.setItem('cargaHoraria', JSON.stringify(carga));
+                    sessionStorage.setItem('nombreArchivo', file.name);
 
                     const cursos = Object.keys(carga).sort();
                     uploadStatus.innerHTML =
@@ -215,6 +244,7 @@
 
             document.getElementById('selCount').innerText = cursosSeleccionados.size;
             document.getElementById('btnNext').disabled = cursosSeleccionados.size === 0;
+            sessionStorage.setItem('cursosSeleccionados', JSON.stringify([...cursosSeleccionados]));
         }
 
         // ── 6. Ir al generador ──────────────────────────────────

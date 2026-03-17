@@ -1490,3 +1490,119 @@ body.page-index-body {
   scrollbar-width: thin;
   scrollbar-color: var(--text-faint) var(--border);
 }
+
+/* ═══════════════════════════════════════════════
+   LAYOUT MÓVIL CON PESTAÑAS
+   ═══════════════════════════════════════════════ */
+.gen-mobile {
+  display: none;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+.mobile-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.mobile-tabs {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 2px solid var(--border);
+  flex-shrink: 0;
+}
+
+.mobile-tab {
+  flex: 1;
+  padding: 12px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+
+.mobile-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.mobile-tab-content {
+  padding: 16px;
+  padding-bottom: 80px;
+}
+
+.mb-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.mb-generar {
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+.mb-topbar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.mb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+/* ═══════════════════════════════════════════════
+   FIRMA COMO SELLO FIJO
+   ═══════════════════════════════════════════════ */
+.harry-stamp {
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 9999;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.harry-stamp-img {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.harry-stamp-text {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Ocultar footer antiguo en generador */
+.gen-layout ~ .harry-footer {
+  display: none;
+}

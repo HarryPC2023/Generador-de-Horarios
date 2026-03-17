@@ -24,7 +24,7 @@ if (typeof cargaGlobal === 'undefined') var cargaGlobal = null;
 // ── TOOLTIP ───────────────────────────────────────────────────
 let tooltipEl = null;
 document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('calendarWrap')) {
+  if (calWrap) {
     tooltipEl = document.createElement('div');
     tooltipEl.className = 'tooltip';
     document.body.appendChild(tooltipEl);
@@ -65,6 +65,9 @@ function inicializar(cursos) {
   });
 
   renderSidebar(seccionesData);
+
+  // Renderiza también el sidebar móvil
+  renderSidebarMobile(seccionesData);
 }
 
 // ── SIDEBAR: RENDER SECCIONES ─────────────────────────────────
@@ -161,7 +164,7 @@ function generar() {
         document.getElementById('navControls').style.display = 'none';
         document.getElementById('btnFav').style.display = 'none';
         document.getElementById('btnExport').style.display = 'none';
-        document.getElementById('calendarWrap').innerHTML = `
+        calWrap.innerHTML = `
           <div class="empty-state">
             <div class="empty-icon">😕</div>
             <div class="empty-text">Sin combinaciones posibles</div>
@@ -176,6 +179,15 @@ function generar() {
       document.getElementById('btnExport').style.display = 'inline-flex';
       dibujar(0);
 
+      // En móvil muestra los botones de la pestaña horario
+      const esMobile = window.innerWidth < 900;
+      if (esMobile) {
+        document.getElementById('navControlsMobile').style.display = 'flex';
+        document.getElementById('btnFavMobile').style.display = 'inline-flex';
+        document.getElementById('btnExportImgMobile').style.display = 'inline-flex';
+        document.getElementById('btnExportXlsMobile').style.display = 'inline-flex';
+      }
+
     } catch (e) {
       document.getElementById('topbarTitle').innerHTML =
         '<span style="color:#ef4444">Error al generar combinaciones</span>';
@@ -187,8 +199,15 @@ function generar() {
 // Sin cambios — recibía combo con la misma estructura que ahora
 function dibujar(idx) {
   const combo = combosValidos[idx];
-  document.getElementById('counter').textContent = `${idx + 1} / ${combosValidos.length}`;
-  document.getElementById('topbarTitle').innerHTML =
+  const esMobile = window.innerWidth < 900;
+
+  // Actualiza contadores y títulos según el layout activo
+  const counterEl = esMobile ? document.getElementById('counterMobile') : document.getElementById('counter');
+  const topbarTitleEl = esMobile ? document.getElementById('topbarTitleMobile') : document.getElementById('topbarTitle');
+  const calWrap = esMobile ? document.getElementById('calendarWrapMobile') : calWrap;
+
+  if (counterEl) counterEl.textContent = `${idx + 1} / ${combosValidos.length}`;
+  if (topbarTitleEl) topbarTitleEl.innerHTML =
     `Opción <span>${idx + 1}</span> de <span>${combosValidos.length}</span> combinaciones`;
 
   const HOURS = [];
@@ -206,7 +225,7 @@ function dibujar(idx) {
     </tr>`;
   });
   html += `</tbody></table>`;
-  document.getElementById('calendarWrap').innerHTML = html;
+  if (calWrap) calWrap.innerHTML = html;
 
   const dayBlocks = {};
   combo.forEach((sec, ci) => {
@@ -422,4 +441,168 @@ function showToast(msg, type = 'info') {
   t.textContent = msg;
   t.className = `toast show ${type}`;
   setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+// ── PESTAÑAS MÓVIL ────────────────────────────────────────────
+function switchTab(tab) {
+  const config = document.getElementById('tabConfig');
+  const horario = document.getElementById('tabHorario');
+  const btnConfig = document.getElementById('tabConfigBtn');
+  const btnHorario = document.getElementById('tabHorarioBtn');
+
+  if (tab === 'config') {
+    config.style.display = 'block';
+    horario.style.display = 'none';
+    btnConfig.classList.add('active');
+    btnHorario.classList.remove('active');
+  } else {
+    config.style.display = 'none';
+    horario.style.display = 'block';
+    btnConfig.classList.remove('active');
+    btnHorario.classList.add('active');
+  }
+}
+
+// Generar desde móvil — cambia a pestaña horario automáticamente
+function generarMobile() {
+  // Sincroniza cruces del input móvil
+  const inputMobile = document.getElementById('crucesInputMobile');
+  if (inputMobile) setCruces(parseInt(inputMobile.value) || 0);
+  generar();
+  // Cambia a pestaña horario después de generar
+  setTimeout(() => switchTab('horario'), 100);
+}
+
+// ── EXPORTAR EXCEL ────────────────────────────────────────────
+function exportarExcel() {
+  if (!combosValidos.length) {
+    showToast('Genera un horario primero', 'error');
+    return;
+  }
+
+  const combo = combosValidos[currentIndex];
+  const DIAS_LABEL = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const fmt = n => `${Math.floor(n / 100)}:${String(n % 100).padStart(2, '0')}`;
+
+  // ── HOJA 1: CALENDARIO ──────────────────────────────────────
+  // Construye la grilla de horas x días
+  const horasUnicas = new Set();
+  combo.forEach(sec => sec.clases.forEach(cl => {
+    for (let h = Math.floor(cl.ini / 100); h < Math.floor(cl.fin / 100); h++) {
+      horasUnicas.add(h);
+    }
+  }));
+  const horas = [...horasUnicas].sort((a, b) => a - b);
+
+  // Cabecera
+  const calendarioData = [['Hora', ...DIAS_LABEL]];
+
+  // Filas por hora
+  horas.forEach(h => {
+    const fila = [`${h}:00`];
+    DIAS_LABEL.forEach((_, dIdx) => {
+      const dia = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'][dIdx];
+      const claseEnEstaHora = [];
+      combo.forEach(sec => {
+        sec.clases.forEach(cl => {
+          if (cl.dia === dia) {
+            const startH = Math.floor(cl.ini / 100);
+            const endH = Math.floor(cl.fin / 100);
+            if (h >= startH && h < endH) {
+              claseEnEstaHora.push(`${sec.nombre} (${cl.tipo}) Sec.${sec.seccion}`);
+            }
+          }
+        });
+      });
+      fila.push(claseEnEstaHora.join(' | ') || '');
+    });
+    calendarioData.push(fila);
+  });
+
+  // ── HOJA 2: DETALLE ─────────────────────────────────────────
+  const detalleData = [
+    ['Curso', 'Sección', 'Docente', 'Tipo', 'Día', 'Hora inicio', 'Hora fin', 'Aula']
+  ];
+  combo.forEach(sec => {
+    sec.clases.forEach(cl => {
+      detalleData.push([
+        sec.nombre,
+        sec.seccion,
+        sec.docente,
+        cl.tipo === 'T' ? 'Teoría' : 'Práctica',
+        cl.dia,
+        fmt(cl.ini),
+        fmt(cl.fin),
+        cl.aula || '—'
+      ]);
+    });
+  });
+
+  // ── CREAR Y DESCARGAR ────────────────────────────────────────
+  const wb = XLSX.utils.book_new();
+
+  const wsCalendario = XLSX.utils.aoa_to_sheet(calendarioData);
+  wsCalendario['!cols'] = [{ wch: 8 }, ...DIAS_LABEL.map(() => ({ wch: 25 }))];
+  XLSX.utils.book_append_sheet(wb, wsCalendario, 'Calendario');
+
+  const wsDetalle = XLSX.utils.aoa_to_sheet(detalleData);
+  wsDetalle['!cols'] = [
+    { wch: 30 }, { wch: 10 }, { wch: 30 }, { wch: 10 },
+    { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 15 }
+  ];
+  XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle');
+
+  XLSX.writeFile(wb, `horario_opcion_${currentIndex + 1}.xlsx`);
+  showToast('Excel descargado ✓', 'success');
+}
+// ── SIDEBAR MÓVIL ─────────────────────────────────────────────
+function renderSidebarMobile(data) {
+  const container = document.getElementById('listaCursosMobile');
+  if (!container) return;
+  container.innerHTML = '';
+
+  Object.entries(data).forEach(([curso, secMap]) => {
+    const color = courseColors[curso] || '#06b6d4';
+    const secciones = Object.keys(secMap).sort();
+
+    const block = document.createElement('div');
+    block.className = 'course-block';
+    block.style.borderLeftColor = color;
+
+    const header = document.createElement('div');
+    header.className = 'course-header';
+    header.innerHTML = `
+      <div class="course-dot" style="background:${color}"></div>
+      <div class="course-name" title="${curso}">${curso}</div>
+      <div class="course-chevron">▶</div>`;
+
+    const profsDiv = document.createElement('div');
+    profsDiv.className = 'course-profs';
+
+    secciones.forEach(sec => {
+      const docente = secMap[sec].docente;
+      const label = document.createElement('label');
+      label.className = 'prof-option';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'p-check';
+      cb.dataset.curso = curso;
+      cb.dataset.seccion = sec;
+      cb.value = sec;
+      cb.checked = true;
+      const span = document.createElement('span');
+      span.innerHTML = `<strong>Sección ${sec}</strong> — ${docente}`;
+      label.appendChild(cb);
+      label.appendChild(span);
+      profsDiv.appendChild(label);
+    });
+
+    header.addEventListener('click', () => {
+      const open = profsDiv.classList.toggle('open');
+      header.querySelector('.course-chevron').classList.toggle('open', open);
+    });
+
+    block.appendChild(header);
+    block.appendChild(profsDiv);
+    container.appendChild(block);
+  });
 }

@@ -3,7 +3,7 @@
 // Permite instalación como PWA y funcionamiento offline
 // ============================================================
 
-const CACHE_NAME = 'horariogen-v7';
+const CACHE_NAME = 'horariogen-v8';
 
 // Lista de archivos que se guardan en caché al instalar la app
 // Equivale a los archivos estáticos que Flask servía

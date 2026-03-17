@@ -1391,3 +1391,8 @@ html:has(body.page-index-body)::-webkit-scrollbar-thumb {
 html:has(body.page-index-body)::-webkit-scrollbar-thumb:hover {
   background: var(--text-dim);
 }
+
+body.page-index-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-faint) var(--border);
+}

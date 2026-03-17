@@ -1373,3 +1373,21 @@ body.page-index-body {
 .page-index-body .harry-footer {
     display: none;
 }
+
+/* ── Scrollbar visible en page-index-body ── */
+html:has(body.page-index-body)::-webkit-scrollbar {
+  width: 8px;
+}
+
+html:has(body.page-index-body)::-webkit-scrollbar-track {
+  background: var(--border);
+}
+
+html:has(body.page-index-body)::-webkit-scrollbar-thumb {
+  background: var(--text-faint);
+  border-radius: 4px;
+}
+
+html:has(body.page-index-body)::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}

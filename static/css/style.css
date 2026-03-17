@@ -1276,7 +1276,7 @@ body {
   .sidebar {
     width: 100%;
     height: auto;
-    max-height: 40vh;
+    max-height: 52vh;
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
@@ -1335,6 +1335,11 @@ body {
 
   .sidebar-footer {
     padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  .sidebar-scroll {
+    max-height: calc(52vh - 120px);
+    overflow-y: auto;
   }
 }
 

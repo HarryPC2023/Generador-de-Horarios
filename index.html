@@ -15,9 +15,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 
-<body>
+<body class="page-index-body">
 
-    <div class="page-index" style="min-height: 100vh; overflow-y: auto;">
+    <div class="page-index" style="min-height: 100vh;">
 
         <!-- ═══ HEADER ═══ -->
         <div class="idx-header">
@@ -25,7 +25,7 @@
                 <img src="static/img/512x512.png" alt="Logo" class="logo-app-img">
                 <div>
                     <div class="logo-title">Generador de Horarios</div>
-                    <div class="logo-sub">Planifica tu horario</div>
+                    <div class="logo-sub">Planifica tu Horario</div>
                 </div>
             </div>
         </div>
@@ -68,8 +68,7 @@
                 </div>
 
                 <!-- JS llenará esta lista con los cursos del Excel -->
-                <div class="cursos-lista" id="cursosLista"
-                    style="max-height: 350px; overflow-y: auto; padding-right: 4px;"></div>
+                <div class="cursos-lista" id="cursosLista"></div>
 
                 <div class="seleccionados-wrap">
                     <div class="sel-header">

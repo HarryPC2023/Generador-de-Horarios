@@ -1236,30 +1236,105 @@ body {
     --sidebar-w: 240px;
   }
 
+  .sidebar-scroll { padding: 10px; }
+  .course-name { font-size: 10px; }
+  .prof-option { font-size: 10px; }
+  .cb-name { font-size: 8px; -webkit-line-clamp: 2; }
+  .cb-meta { font-size: 7px; }
+  .cb-badge { font-size: 6px; }
+}
+
+/* ── Móvil: cualquier pantalla menor a 900px ── */
+@media (max-width: 900px) {
+  :root { --row-h: 32px; }
+
+  /* Layout vertical — sidebar arriba, calendario abajo */
+  .gen-layout {
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* Sidebar ocupa parte superior con altura fija */
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-shrink: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Scroll interno del sidebar limitado */
   .sidebar-scroll {
-    padding: 10px;
+    max-height: 35vmax;
+    overflow-y: auto;
   }
 
-  .course-name {
-    font-size: 10px;
+  /* Footer del sidebar siempre visible */
+  .sidebar-footer {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
   }
 
-  .prof-option {
-    font-size: 10px;
+  /* El main ocupa el resto de la pantalla */
+  .main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
-  .cb-name {
-    font-size: 8px;
-    -webkit-line-clamp: 2;
+  /* Topbar compacto */
+  .topbar {
+    flex-wrap: wrap;
+    padding: 6px 10px;
+    flex-shrink: 0;
+    gap: 6px;
   }
 
-  .cb-meta {
-    font-size: 7px;
+  .topbar-title {
+    width: 100%;
+    font-size: 11px;
   }
 
-  .cb-badge {
-    font-size: 6px;
+  .topbar-actions {
+    gap: 4px;
+    flex-wrap: wrap;
   }
+
+  /* Calendario con scroll completo */
+  .calendar-wrap {
+    flex: 1;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+    padding: 8px;
+  }
+
+  .sched-table { min-width: 480px; }
+
+  .btn-action { font-size: 10px; padding: 4px 8px; }
+  .btn-nav { width: 26px; height: 26px; }
+  .cb-name { font-size: 8px; -webkit-line-clamp: 2; }
+  .cb-meta { display: none; }
+  .cb-badge { font-size: 6px; }
+  .class-block { padding: 1px 3px; border-left-width: 2px; }
+}
+
+/* ── Pantallas muy pequeñas ── */
+@media (max-width: 480px) {
+  :root { --row-h: 28px; }
+
+  .sidebar-scroll { max-height: 30vmax; }
+  .sched-table { min-width: 400px; }
+  .topbar-title { font-size: 10px; }
+  .counter-pill { font-size: 10px; padding: 2px 8px; }
+  .cb-name { font-size: 9px; }
+  .cb-meta { font-size: 8px; }
+  .cb-badge { font-size: 7px; }
 }
 
 /* ── Pantallas pequeñas (móviles) ── */

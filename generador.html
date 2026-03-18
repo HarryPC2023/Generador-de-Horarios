@@ -10,10 +10,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-
-  <!-- ═══ LAYOUT ESCRITORIO ═══ -->
-  <div class="gen-layout" id="layoutEscritorio">
-
+ 
+  <!-- ═══ LAYOUT ÚNICO (desktop: 2 columnas / móvil: 1 columna con scroll) ═══ -->
+  <div class="gen-layout">
+ 
     <!-- SIDEBAR -->
     <div class="sidebar">
       <div class="sidebar-header">
@@ -53,7 +53,7 @@
         <button class="btn-gen" onclick="generar()">⚡ Generar Horarios</button>
       </div>
     </div>
-
+ 
     <!-- MAIN -->
     <div class="main">
       <div class="topbar">
@@ -82,88 +82,7 @@
       </div>
     </div>
   </div>
-
-  <!-- ═══ LAYOUT MÓVIL CON PESTAÑAS ═══ -->
-  <div class="gen-mobile" id="layoutMobile">
-
-    <!-- Header móvil -->
-    <div class="mobile-header">
-      <div class="sidebar-logo">
-        <img src="static/img/512x512.png" alt="Logo" class="logo-icon-img">
-        <span class="sidebar-logo-text">Generador de Horarios</span>
-      </div>
-      <a href="index.html" class="back-btn">← Volver</a>
-    </div>
-
-    <!-- Pestañas -->
-    <div class="mobile-tabs">
-      <button class="mobile-tab active" id="tabConfigBtn" onclick="switchTab('config')">
-        ⚙ Configurar
-      </button>
-      <button class="mobile-tab" id="tabHorarioBtn" onclick="switchTab('horario')">
-        📅 Horario
-      </button>
-    </div>
-
-    <!-- Pestaña Configurar -->
-    <div class="mobile-tab-content" id="tabConfig">
-      <div class="mb-section">
-        <div class="step-label">01 — Secciones por curso</div>
-        <div id="listaCursosMobile">
-          <div class="sb-loading">Cargando secciones...</div>
-        </div>
-      </div>
-      <div class="mb-section">
-        <div class="step-label">02 — Cruces permitidos</div>
-        <div class="crossings-row">
-          <div class="crossings-label">
-            <strong>Cantidad de cruces</strong>
-            Solo aplica a teoría
-          </div>
-          <div class="crossings-spinner">
-            <input type="number" class="spinner-input" id="crucesInputMobile"
-                   min="0" max="6" value="0"
-                   oninput="setCruces(parseInt(this.value)||0)">
-            <div class="spinner-btns">
-              <button class="spinner-btn" onclick="setCruces(maxCruces-1)">−</button>
-              <button class="spinner-btn" onclick="setCruces(maxCruces+1)">+</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <button class="btn-gen mb-generar" onclick="generarMobile()">⚡ Generar Horarios</button>
-    </div>
-
-    <!-- Pestaña Horario -->
-    <div class="mobile-tab-content" id="tabHorario" style="display:none">
-      <div class="mb-topbar">
-        <div class="topbar-title" id="topbarTitleMobile">Genera tu horario primero</div>
-        <div class="mb-actions">
-          <div class="nav-controls" id="navControlsMobile" style="display:none">
-            <button class="btn-nav" onclick="cambiar(-1)">◀</button>
-            <div class="counter-pill" id="counterMobile">1 / 1</div>
-            <button class="btn-nav" onclick="cambiar(1)">▶</button>
-          </div>
-          <button class="btn-action" id="btnFavMobile" onclick="guardarFavorito()"
-                  style="display:none">★ Guardar</button>
-          <button class="btn-action" id="btnExportImgMobile" onclick="exportarImagen()"
-                  style="display:none">⬇ PNG</button>
-          <button class="btn-action" id="btnExportXlsMobile" onclick="exportarExcel()"
-                  style="display:none">⬇ Excel</button>
-          <button class="btn-action" onclick="toggleFavoritos()">☆ Favs</button>
-        </div>
-      </div>
-      <div id="calendarWrapMobile">
-        <div class="empty-state" style="padding: 40px 20px;">
-          <div class="empty-icon">🗓</div>
-          <div class="empty-text">Tu horario aparecerá aquí</div>
-          <div class="empty-sub">Ve a Configurar y pulsa Generar</div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
+ 
   <!-- Panel Favoritos -->
   <div class="favs-panel" id="favsPanel" style="display:none">
     <div class="favs-header">
@@ -173,15 +92,15 @@
     <div class="favs-list" id="favsList"></div>
   </div>
   <div class="favs-overlay" id="favsOverlay" onclick="toggleFavoritos()" style="display:none"></div>
-
+ 
   <div class="toast" id="toast"></div>
-
+ 
   <!-- ═══ FIRMA FIJA ═══ -->
   <div class="harry-stamp">
     <img src="static/img/harry.png" alt="Harry" class="harry-stamp-img">
     <span class="harry-stamp-text">by Harry</span>
   </div>
-
+ 
   <!-- Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="static/js/parser.js"></script>
@@ -192,16 +111,7 @@
     const cursosSeleccionados = params.getAll('curso');
     const cargaGuardada = sessionStorage.getItem('cargaHoraria');
     if (cargaGuardada) cargaGlobal = JSON.parse(cargaGuardada);
-
-    // Detecta si es móvil y muestra el layout correcto
-    function detectarLayout() {
-      const esMobile = window.innerWidth < 900;
-      document.getElementById('layoutEscritorio').style.display = esMobile ? 'none' : 'flex';
-      document.getElementById('layoutMobile').style.display     = esMobile ? 'flex' : 'none';
-    }
-    detectarLayout();
-    window.addEventListener('resize', detectarLayout);
-
+ 
     inicializar(cursosSeleccionados);
   </script>
   <script>

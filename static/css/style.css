@@ -1236,63 +1236,87 @@ body {
     --sidebar-w: 240px;
   }
 
-  .sidebar-scroll { padding: 10px; }
-  .course-name { font-size: 10px; }
-  .prof-option { font-size: 10px; }
-  .cb-name { font-size: 8px; -webkit-line-clamp: 2; }
-  .cb-meta { font-size: 7px; }
-  .cb-badge { font-size: 6px; }
-}
-
-/* ── Móvil: cualquier pantalla menor a 900px ── */
-@media (max-width: 900px) {
-  :root { --row-h: 32px; }
-
-  /* Layout vertical — sidebar arriba, calendario abajo */
-  .gen-layout {
-    flex-direction: column;
-    height: 100dvh;
-    overflow: hidden;
+  .sidebar-scroll {
+    padding: 10px;
   }
 
-  /* Sidebar ocupa parte superior con altura fija */
+  .course-name {
+    font-size: 10px;
+  }
+
+  .prof-option {
+    font-size: 10px;
+  }
+
+  .cb-name {
+    font-size: 8px;
+    -webkit-line-clamp: 2;
+  }
+
+  .cb-meta {
+    font-size: 7px;
+  }
+
+  .cb-badge {
+    font-size: 6px;
+  }
+}
+
+/* ── Móvil: columna única con scroll libre (< 900px) ── */
+@media (max-width: 900px) {
+  :root {
+    --row-h: 32px;
+  }
+
+  .gen-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
   .sidebar {
     width: 100%;
     height: auto;
     flex-shrink: 0;
     border-right: none;
     border-bottom: 1px solid var(--border);
+    overflow: visible;
   }
 
-  /* Scroll interno del sidebar limitado */
   .sidebar-scroll {
-    max-height: 35vmax;
-    overflow-y: auto;
+    max-height: none;
+    overflow-y: visible;
+    padding: 14px;
   }
 
-  /* Footer del sidebar siempre visible */
   .sidebar-footer {
     flex-shrink: 0;
-    padding: 10px 14px;
+    padding: 12px 14px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
     border-top: 1px solid var(--border);
     background: var(--surface);
   }
 
-  /* El main ocupa el resto de la pantalla */
   .main {
-    flex: 1;
-    min-height: 0;
+    flex: none;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
+    min-height: 60vh;
   }
 
-  /* Topbar compacto */
   .topbar {
     flex-wrap: wrap;
-    padding: 6px 10px;
+    padding: 8px 12px;
     flex-shrink: 0;
     gap: 6px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--surface);
   }
 
   .topbar-title {
@@ -1305,36 +1329,81 @@ body {
     flex-wrap: wrap;
   }
 
-  /* Calendario con scroll completo */
   .calendar-wrap {
-    flex: 1;
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: visible;
     -webkit-overflow-scrolling: touch;
-    min-height: 0;
-    padding: 8px;
+    padding: 10px 12px 80px 12px;
+    min-height: 50vh;
   }
 
-  .sched-table { min-width: 480px; }
+  .sched-table {
+    min-width: 480px;
+  }
 
-  .btn-action { font-size: 10px; padding: 4px 8px; }
-  .btn-nav { width: 26px; height: 26px; }
-  .cb-name { font-size: 8px; -webkit-line-clamp: 2; }
-  .cb-meta { display: none; }
-  .cb-badge { font-size: 6px; }
-  .class-block { padding: 1px 3px; border-left-width: 2px; }
+  .btn-action {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .btn-nav {
+    width: 26px;
+    height: 26px;
+  }
+
+  .cb-name {
+    font-size: 8px;
+    -webkit-line-clamp: 2;
+  }
+
+  .cb-meta {
+    display: none;
+  }
+
+  .cb-badge {
+    font-size: 6px;
+  }
+
+  .class-block {
+    padding: 1px 3px;
+    border-left-width: 2px;
+  }
 }
 
 /* ── Pantallas muy pequeñas ── */
 @media (max-width: 480px) {
-  :root { --row-h: 28px; }
+  :root {
+    --row-h: 28px;
+  }
 
-  .sidebar-scroll { max-height: 30vmax; }
-  .sched-table { min-width: 400px; }
-  .topbar-title { font-size: 10px; }
-  .counter-pill { font-size: 10px; padding: 2px 8px; }
-  .cb-name { font-size: 9px; }
-  .cb-meta { font-size: 8px; }
-  .cb-badge { font-size: 7px; }
+  .sidebar-scroll {
+    max-height: 30vmax;
+  }
+
+  .sched-table {
+    min-width: 400px;
+  }
+
+  .topbar-title {
+    font-size: 10px;
+  }
+
+  .counter-pill {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .cb-name {
+    font-size: 9px;
+  }
+
+  .cb-meta {
+    font-size: 8px;
+  }
+
+  .cb-badge {
+    font-size: 7px;
+  }
 }
 
 /* ── Pantallas pequeñas (móviles) ── */
@@ -1492,94 +1561,12 @@ body.page-index-body {
 }
 
 /* ═══════════════════════════════════════════════
-   LAYOUT MÓVIL CON PESTAÑAS
-   ═══════════════════════════════════════════════ */
-.gen-mobile {
-  display: none;
-  flex-direction: column;
-  min-height: 100dvh;
-  background: var(--bg);
-}
-
-.mobile-header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-
-.mobile-tabs {
-  display: flex;
-  background: var(--surface);
-  border-bottom: 2px solid var(--border);
-  flex-shrink: 0;
-}
-
-.mobile-tab {
-  flex: 1;
-  padding: 12px;
-  background: none;
-  border: none;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-dim);
-  cursor: pointer;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -2px;
-  transition: all 0.2s;
-}
-
-.mobile-tab.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.mobile-tab-content {
-  padding: 16px;
-  padding-bottom: 80px;
-}
-
-.mb-section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 14px;
-}
-
-.mb-generar {
-  width: 100%;
-  margin-top: 8px;
-  margin-bottom: 16px;
-}
-
-.mb-topbar {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px;
-  margin-bottom: 14px;
-}
-
-.mb-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-  align-items: center;
-}
-
-/* ═══════════════════════════════════════════════
    FIRMA COMO SELLO FIJO
    ═══════════════════════════════════════════════ */
 .harry-stamp {
   position: fixed;
   bottom: 12px;
-  left: 12px;
+  right: 12px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1603,6 +1590,6 @@ body.page-index-body {
 }
 
 /* Ocultar footer antiguo en generador */
-.gen-layout ~ .harry-footer {
+.gen-layout~.harry-footer {
   display: none;
 }

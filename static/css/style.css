@@ -1265,7 +1265,7 @@ body {
 /* ── Móvil: columna única con scroll libre (< 900px) ── */
 @media (max-width: 900px) {
   :root {
-    --row-h: 32px;
+    --row-h: 44px;
   }
 
   .gen-layout {
@@ -1274,6 +1274,7 @@ body {
     min-height: 100dvh;
     overflow-y: auto;
     overflow-x: hidden;
+    position: relative;
   }
 
   .sidebar {
@@ -1305,7 +1306,6 @@ body {
     display: flex;
     flex-direction: column;
     overflow: visible;
-    min-height: 60vh;
   }
 
   .topbar {
@@ -1329,172 +1329,50 @@ body {
     flex-wrap: wrap;
   }
 
+  /* Calendario libre — scroll horizontal para la tabla, vertical por la página */
   .calendar-wrap {
     overflow-x: auto;
     overflow-y: visible;
     -webkit-overflow-scrolling: touch;
-    padding: 10px 12px 80px 12px;
-    min-height: 50vh;
+    padding: 10px 12px 60px 12px;
   }
 
   .sched-table {
-    min-width: 480px;
+    min-width: 520px;
+    table-layout: fixed;
   }
 
-  .btn-action {
-    font-size: 10px;
-    padding: 4px 8px;
+  /* Filas más altas para que los bloques no se superpongan */
+  .sched-table tbody td {
+    height: var(--row-h);
   }
 
-  .btn-nav {
-    width: 26px;
-    height: 26px;
-  }
-
-  .cb-name {
-    font-size: 8px;
-    -webkit-line-clamp: 2;
-  }
-
-  .cb-meta {
-    display: none;
-  }
-
-  .cb-badge {
-    font-size: 6px;
-  }
-
-  .class-block {
-    padding: 1px 3px;
-    border-left-width: 2px;
-  }
-}
-
-/* ── Pantallas muy pequeñas ── */
-@media (max-width: 480px) {
-  :root {
-    --row-h: 28px;
-  }
-
-  .sidebar-scroll {
-    max-height: 30vmax;
-  }
-
-  .sched-table {
-    min-width: 400px;
-  }
-
-  .topbar-title {
-    font-size: 10px;
-  }
-
-  .counter-pill {
-    font-size: 10px;
-    padding: 2px 8px;
-  }
-
+  /* Nombres de cursos completos, sin recorte */
   .cb-name {
     font-size: 9px;
-  }
-
-  .cb-meta {
-    font-size: 8px;
-  }
-
-  .cb-badge {
-    font-size: 7px;
-  }
-}
-
-/* ── Pantallas pequeñas (móviles) ── */
-@media (max-width: 768px) {
-  :root {
-    --row-h: 32px;
-  }
-
-  .gen-layout {
-    flex-direction: column;
-    height: calc(100vh - 40px);
-  }
-
-  .sidebar {
-    width: 100%;
-    height: auto;
-    max-height: 52vh;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .main {
-    flex: 1;
-    min-height: 0;
-  }
-
-  .calendar-wrap {
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .sched-table {
-    min-width: 500px;
-  }
-
-  .topbar {
-    flex-wrap: wrap;
-    padding: 8px 12px;
-  }
-
-  .topbar-actions {
-    gap: 4px;
-  }
-
-  .btn-action {
-    font-size: 10px;
-    padding: 4px 8px;
-  }
-
-  .btn-nav {
-    width: 26px;
-    height: 26px;
-  }
-
-  .cb-name {
-    font-size: 8px;
-    -webkit-line-clamp: 2;
-  }
-
-  .cb-meta {
-    display: none;
-  }
-
-  /* oculta aula en móvil */
-  .cb-badge {
-    font-size: 6px;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+    display: block;
+    white-space: normal;
+    word-break: break-word;
   }
 
   .class-block {
-    padding: 1px 3px;
+    padding: 3px 4px;
     border-left-width: 2px;
+    overflow: visible;
   }
 
-  .sidebar-footer {
-    padding-bottom: max(14px, env(safe-area-inset-bottom));
-  }
-
-  .sidebar-scroll {
-    max-height: calc(52vh - 120px);
-    overflow-y: auto;
-  }
+  .btn-action { font-size: 10px; padding: 4px 8px; }
+  .btn-nav { width: 26px; height: 26px; }
+  .cb-meta { display: none; }
+  .cb-badge { font-size: 6px; }
 }
 
-/* ── Pantallas muy pequeñas ── */
+/* ── Pantallas muy pequeñas (< 480px) ── */
 @media (max-width: 480px) {
   :root {
-    --row-h: 28px;
-  }
-
-  .sidebar {
-    max-height: 35vh;
+    --row-h: 40px;
   }
 
   .sched-table {
@@ -1502,24 +1380,12 @@ body {
   }
 
   .topbar-title {
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .counter-pill {
     font-size: 10px;
     padding: 2px 8px;
-  }
-
-  .cb-name {
-    font-size: 9px;
-  }
-
-  .cb-meta {
-    font-size: 8px;
-  }
-
-  .cb-badge {
-    font-size: 7px;
   }
 }
 
@@ -1564,20 +1430,20 @@ body.page-index-body {
    FIRMA COMO SELLO FIJO
    ═══════════════════════════════════════════════ */
 .harry-stamp {
-  position: fixed;
+  position: absolute;
   bottom: 12px;
-  right: 12px;
+  right: 16px;
   display: flex;
   align-items: center;
   gap: 6px;
-  z-index: 9999;
-  opacity: 0.7;
+  z-index: 10;
+  opacity: 0.6;
   pointer-events: none;
 }
 
 .harry-stamp-img {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 4px;
   object-fit: cover;
 }
@@ -1587,6 +1453,18 @@ body.page-index-body {
   font-weight: 700;
   color: var(--text-dim);
   font-family: 'JetBrains Mono', monospace;
+}
+
+/* En móvil la firma se posiciona relativa al gen-layout */
+@media (max-width: 900px) {
+  .harry-stamp {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    justify-content: flex-end;
+    padding: 16px 16px 24px 16px;
+    opacity: 0.5;
+  }
 }
 
 /* Ocultar footer antiguo en generador */

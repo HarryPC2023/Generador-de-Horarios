@@ -26,6 +26,17 @@ body {
   overflow: hidden;
 }
 
+/* En móvil el body necesita scroll libre */
+@media (max-width: 900px) {
+
+  html,
+  body {
+    height: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
 html:has(body.page-index-body),
 body.page-index-body {
   overflow-y: auto !important;
@@ -1272,8 +1283,7 @@ body {
     flex-direction: column;
     height: auto;
     min-height: 100dvh;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: visible;
     position: relative;
   }
 
@@ -1300,6 +1310,7 @@ body {
     background: var(--surface);
   }
 
+  /* El main fluye normalmente, sin altura fija */
   .main {
     flex: none;
     width: 100%;
@@ -1308,15 +1319,15 @@ body {
     overflow: visible;
   }
 
+  /* Topbar sin sticky — se queda en su lugar natural con el scroll */
   .topbar {
     flex-wrap: wrap;
     padding: 8px 12px;
     flex-shrink: 0;
     gap: 6px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    position: static;
     background: var(--surface);
+    border-bottom: 2px solid var(--border);
   }
 
   .topbar-title {
@@ -1329,12 +1340,12 @@ body {
     flex-wrap: wrap;
   }
 
-  /* Calendario libre — scroll horizontal para la tabla, vertical por la página */
+  /* Calendario: scroll horizontal interno, vertical por la página */
   .calendar-wrap {
     overflow-x: auto;
     overflow-y: visible;
     -webkit-overflow-scrolling: touch;
-    padding: 10px 12px 60px 12px;
+    padding: 10px 12px 20px 12px;
   }
 
   .sched-table {
@@ -1342,12 +1353,11 @@ body {
     table-layout: fixed;
   }
 
-  /* Filas más altas para que los bloques no se superpongan */
   .sched-table tbody td {
     height: var(--row-h);
   }
 
-  /* Nombres de cursos completos, sin recorte */
+  /* Nombres completos sin recorte */
   .cb-name {
     font-size: 9px;
     -webkit-line-clamp: unset;
@@ -1363,10 +1373,23 @@ body {
     overflow: visible;
   }
 
-  .btn-action { font-size: 10px; padding: 4px 8px; }
-  .btn-nav { width: 26px; height: 26px; }
-  .cb-meta { display: none; }
-  .cb-badge { font-size: 6px; }
+  .btn-action {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .btn-nav {
+    width: 26px;
+    height: 26px;
+  }
+
+  .cb-meta {
+    display: none;
+  }
+
+  .cb-badge {
+    font-size: 6px;
+  }
 }
 
 /* ── Pantallas muy pequeñas (< 480px) ── */
@@ -1430,15 +1453,27 @@ body.page-index-body {
    FIRMA COMO SELLO FIJO
    ═══════════════════════════════════════════════ */
 .harry-stamp {
-  position: absolute;
+  position: fixed;
   bottom: 12px;
   right: 16px;
   display: flex;
   align-items: center;
   gap: 6px;
-  z-index: 10;
+  z-index: 9999;
   opacity: 0.6;
   pointer-events: none;
+}
+
+/* En móvil: fluye con el contenido, al final del todo */
+@media (max-width: 900px) {
+  .harry-stamp {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    justify-content: flex-end;
+    padding: 20px 16px 32px 16px;
+    opacity: 0.5;
+  }
 }
 
 .harry-stamp-img {
@@ -1453,18 +1488,6 @@ body.page-index-body {
   font-weight: 700;
   color: var(--text-dim);
   font-family: 'JetBrains Mono', monospace;
-}
-
-/* En móvil la firma se posiciona relativa al gen-layout */
-@media (max-width: 900px) {
-  .harry-stamp {
-    position: relative;
-    bottom: auto;
-    right: auto;
-    justify-content: flex-end;
-    padding: 16px 16px 24px 16px;
-    opacity: 0.5;
-  }
 }
 
 /* Ocultar footer antiguo en generador */

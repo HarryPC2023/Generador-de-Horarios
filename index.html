@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-
+ 
 <head>
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
@@ -10,15 +10,15 @@
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="static/css/style.css">
-
+ 
     <!-- SheetJS: equivale a openpyxl, lee el Excel en el navegador -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
-
+ 
 <body class="page-index-body">
-
+ 
     <div class="page-index" style="min-height: 100vh;">
-
+ 
         <!-- ═══ HEADER ═══ -->
         <div class="idx-header">
             <div class="idx-logo">
@@ -29,15 +29,15 @@
                 </div>
             </div>
         </div>
-
+ 
         <!-- ═══ BODY ═══ -->
         <div class="idx-body">
-
+ 
             <!-- ── CARD 1: SUBIR CARGA HORARIA ── -->
             <div class="idx-card">
                 <div class="card-title">📁 Subir carga horaria</div>
                 <div class="card-desc">Sube el archivo .xlsx con los horarios disponibles</div>
-
+ 
                 <div class="upload-zone" id="uploadZone">
                     <input type="file" id="fileInput" accept=".xlsx,.xls">
                     <div class="upload-icon">📄</div>
@@ -46,30 +46,34 @@
                         Formatos: .xlsx, .xls
                     </div>
                 </div>
-
-                <div id="fileInfo" class="file-badge" style="display:none"></div>
-
+ 
+                <!-- Badge del archivo con botón X para limpiar -->
+                <div id="fileInfo" class="file-badge" style="display:none">
+                    <span id="fileInfoText"></span>
+                    <button id="btnClearFile" title="Quitar archivo y limpiar selección"
+                        style="margin-left:auto;background:none;border:none;cursor:pointer;
+                               font-size:14px;color:#64748b;line-height:1;padding:0 0 0 8px;">✕</button>
+                </div>
+ 
                 <button id="btnUpload" class="btn-primary" disabled>
                     Cargar archivo
                 </button>
-
+ 
                 <div id="uploadStatus" class="upload-status"></div>
             </div>
-
+ 
             <!-- ── CARD 2: SELECCIONAR CURSOS ── -->
-            <!-- Empieza oculta, JS la muestra después de cargar el Excel -->
             <div class="idx-card" id="cardCursos" style="display:none">
                 <div class="card-title">📚 Seleccionar cursos</div>
                 <div class="card-desc">Busca y elige los cursos que deseas incluir</div>
-
+ 
                 <div class="search-wrap">
                     <input type="text" id="courseSearch" class="search-input" placeholder="Buscar curso por nombre...">
                     <button id="clearSearch" class="clear-search-btn">✕</button>
                 </div>
-
-                <!-- JS llenará esta lista con los cursos del Excel -->
+ 
                 <div class="cursos-lista" id="cursosLista"></div>
-
+ 
                 <div class="seleccionados-wrap">
                     <div class="sel-header">
                         <span class="sel-label">Seleccionados</span>
@@ -80,54 +84,81 @@
                     </button>
                 </div>
             </div>
-
+ 
         </div>
     </div>
-
-    <!-- ── Scripts ── -->
-    <!-- parser.js debe cargarse antes que este script -->
+ 
     <script src="static/js/parser.js"></script>
-
+ 
     <script>
         // ── Referencias al DOM ──────────────────────────────────
-        const fileInput = document.getElementById('fileInput');
-        const btnUpload = document.getElementById('btnUpload');
-        const fileInfo = document.getElementById('fileInfo');
+        const fileInput    = document.getElementById('fileInput');
+        const btnUpload    = document.getElementById('btnUpload');
+        const fileInfo     = document.getElementById('fileInfo');
+        const fileInfoText = document.getElementById('fileInfoText');
+        const btnClearFile = document.getElementById('btnClearFile');
         const uploadStatus = document.getElementById('uploadStatus');
-        const uploadZone = document.getElementById('uploadZone');
-        const cardCursos = document.getElementById('cardCursos');
-        const cursosLista = document.getElementById('cursosLista');
+        const uploadZone   = document.getElementById('uploadZone');
+        const cardCursos   = document.getElementById('cardCursos');
+        const cursosLista  = document.getElementById('cursosLista');
         const courseSearch = document.getElementById('courseSearch');
-        const clearSearch = document.getElementById('clearSearch');
-
-        // Almacena la carga horaria parseada y los cursos seleccionados
-        // Equivale a carga_horaria = {} en app.py
-        let cargaGlobal = null;
+        const clearSearch  = document.getElementById('clearSearch');
+ 
+        let cargaGlobal        = null;
         let cursosSeleccionados = new Set();
-
-        // ── Recuperar carga horaria si ya existe en sessionStorage ──
-        // ── Recuperar carga horaria y selección previa al volver ──
-        const cargaGuardada = sessionStorage.getItem('cargaHoraria');
-        const nombreArchivo = sessionStorage.getItem('nombreArchivo');
+ 
+        // ── Limpiar todo: archivo, memoria y selección ──────────
+        function limpiarTodo() {
+            // Limpia sessionStorage
+            sessionStorage.removeItem('cargaHoraria');
+            sessionStorage.removeItem('nombreArchivo');
+            sessionStorage.removeItem('cursosSeleccionados');
+ 
+            // Resetea estado interno
+            cargaGlobal = null;
+            cursosSeleccionados = new Set();
+ 
+            // Resetea UI
+            fileInfo.style.display = 'none';
+            fileInfoText.textContent = '';
+            fileInput.value = '';
+            uploadZone.classList.remove('active');
+            btnUpload.disabled = true;
+            uploadStatus.innerHTML = '';
+            cardCursos.style.display = 'none';
+            cursosLista.innerHTML = '';
+            courseSearch.value = '';
+            clearSearch.style.display = 'none';
+            document.getElementById('selCount').innerText = '0';
+            document.getElementById('btnNext').disabled = true;
+        }
+ 
+        // ── Botón X: quitar archivo y limpiar memoria ───────────
+        btnClearFile.onclick = (e) => {
+            e.stopPropagation();
+            limpiarTodo();
+        };
+ 
+        // ── Recuperar estado previo al volver desde generador ───
+        const cargaGuardada  = sessionStorage.getItem('cargaHoraria');
+        const nombreArchivo  = sessionStorage.getItem('nombreArchivo');
         const seleccionPrevia = sessionStorage.getItem('cursosSeleccionados');
-
+ 
         if (cargaGuardada) {
             cargaGlobal = JSON.parse(cargaGuardada);
             const cursos = Object.keys(cargaGlobal).sort();
-
-            // Restaura el badge con el nombre del archivo
+ 
             if (nombreArchivo) {
                 fileInfo.style.display = 'flex';
-                fileInfo.innerHTML = '📄 ' + nombreArchivo;
+                fileInfoText.textContent = '📄 ' + nombreArchivo;
             }
-
+ 
             uploadStatus.innerHTML =
                 `<span style="color:#10b981">✅ ${cursos.length} cursos cargados. Puedes seleccionar más.</span>`;
-
+ 
             construirListaCursos(cursos);
             cardCursos.style.display = 'block';
-
-            // Restaura los cursos que ya estaban seleccionados
+ 
             if (seleccionPrevia) {
                 const seleccionados = JSON.parse(seleccionPrevia);
                 seleccionados.forEach(nombre => {
@@ -143,45 +174,45 @@
                 document.getElementById('btnNext').disabled = cursosSeleccionados.size === 0;
             }
         }
-
-        // ── 1. Archivo seleccionado: muestra nombre y habilita botón ──
+ 
+        // ── 1. Archivo seleccionado ─────────────────────────────
         fileInput.onchange = () => {
             if (fileInput.files.length > 0) {
                 const name = fileInput.files[0].name;
                 fileInfo.style.display = 'flex';
-                fileInfo.innerHTML = '📄 ' + name;
+                fileInfoText.textContent = '📄 ' + name;
                 uploadZone.classList.add('active');
                 btnUpload.disabled = false;
             }
         };
-
-        // ── 2. Cargar archivo: llama a parsearExcel() de parser.js ──
-        // Antes hacía fetch('/upload') al servidor Flask.
-        // Ahora parsearExcel() lee el archivo directo en el navegador.
+ 
+        // ── 2. Cargar archivo ───────────────────────────────────
         btnUpload.onclick = () => {
             if (!fileInput.files.length) return;
-
+ 
             const file = fileInput.files[0];
             btnUpload.disabled = true;
             fileInfo.style.display = 'flex';
-            fileInfo.innerHTML = '⏳ Cargando: ' + file.name;
+            fileInfoText.textContent = '⏳ Cargando: ' + file.name;
             uploadStatus.innerHTML = '<span class="spinner"></span> Procesando archivo...';
-
-            // parsearExcel devuelve una Promise (igual que una petición al servidor)
+ 
+            // Al cargar un nuevo archivo, limpia la selección previa
+            cursosSeleccionados = new Set();
+            sessionStorage.removeItem('cursosSeleccionados');
+            document.getElementById('selCount').innerText = '0';
+            document.getElementById('btnNext').disabled = true;
+ 
             parsearExcel(file)
                 .then(carga => {
                     cargaGlobal = carga;
-
-                    // Guarda la carga en sessionStorage para que generador.html la use
-                    // Equivale a carga_horaria = {} en memoria del servidor Flask
                     sessionStorage.setItem('cargaHoraria', JSON.stringify(carga));
                     sessionStorage.setItem('nombreArchivo', file.name);
-
+ 
                     const cursos = Object.keys(carga).sort();
+                    fileInfoText.textContent = '📄 ' + file.name;
                     uploadStatus.innerHTML =
                         `<span style="color:#10b981">✅ ¡Éxito! ${cursos.length} cursos cargados.</span>`;
-
-                    // Construye la lista de cursos — equivale al {% for %} de Jinja
+ 
                     construirListaCursos(cursos);
                     cardCursos.style.display = 'block';
                 })
@@ -191,24 +222,23 @@
                     btnUpload.disabled = false;
                 });
         };
-
-        // ── 3. Construir lista de cursos dinámicamente ──────────
-        // Equivale al {% for nombre in cursos_nombres %} de Jinja
+ 
+        // ── 3. Construir lista de cursos ────────────────────────
         function construirListaCursos(cursos) {
             cursosLista.innerHTML = '';
             cursos.forEach(nombre => {
                 const div = document.createElement('div');
                 div.className = 'curso-item';
                 div.innerHTML = `
-        <span class="curso-nombre">${nombre}</span>
-        <span class="curso-check">✔</span>
-      `;
+                    <span class="curso-nombre">${nombre}</span>
+                    <span class="curso-check">✔</span>
+                `;
                 div.onclick = () => toggleCursoSeleccionado(div, nombre);
                 cursosLista.appendChild(div);
             });
         }
-
-        // ── 4. Buscador: filtrar cursos por nombre ──────────────
+ 
+        // ── 4. Buscador ─────────────────────────────────────────
         courseSearch.addEventListener('input', e => {
             const q = e.target.value.toLowerCase()
                 .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -219,7 +249,7 @@
                 item.style.display = texto.includes(q) ? 'flex' : 'none';
             });
         });
-
+ 
         clearSearch.onclick = () => {
             courseSearch.value = '';
             clearSearch.style.display = 'none';
@@ -228,12 +258,12 @@
             });
             courseSearch.focus();
         };
-
-        // ── 5. Selección de cursos: toggle ✔ y contador ─────────
+ 
+        // ── 5. Toggle selección de cursos ───────────────────────
         function toggleCursoSeleccionado(elemento, nombre) {
             const checkIcon = elemento.querySelector('.curso-check');
             const estaSeleccionado = elemento.classList.toggle('seleccionado');
-
+ 
             if (estaSeleccionado) {
                 checkIcon.style.display = 'inline';
                 cursosSeleccionados.add(nombre);
@@ -241,15 +271,13 @@
                 checkIcon.style.display = 'none';
                 cursosSeleccionados.delete(nombre);
             }
-
+ 
             document.getElementById('selCount').innerText = cursosSeleccionados.size;
             document.getElementById('btnNext').disabled = cursosSeleccionados.size === 0;
             sessionStorage.setItem('cursosSeleccionados', JSON.stringify([...cursosSeleccionados]));
         }
-
+ 
         // ── 6. Ir al generador ──────────────────────────────────
-        // Antes era window.location.href = '/generador?curso=...'
-        // Ahora pasa los cursos por URL igual, generador.html los lee
         document.getElementById('btnNext').onclick = () => {
             if (!cursosSeleccionados.size) return;
             const params = new URLSearchParams();
@@ -257,7 +285,7 @@
             window.location.href = 'generador.html?' + params.toString();
         };
     </script>
-    <!-- ── Registro PWA ── -->
+ 
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
@@ -266,5 +294,5 @@
         }
     </script>
 </body>
-
+ 
 </html>

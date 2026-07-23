@@ -26,6 +26,17 @@ body {
   overflow: hidden;
 }
 
+/* En móvil el body necesita scroll libre */
+@media (max-width: 900px) {
+
+  html,
+  body {
+    height: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
 html:has(body.page-index-body),
 body.page-index-body {
   overflow-y: auto !important;
@@ -745,7 +756,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-height: 0;/
+  min-height: 0;
 }
 
 .topbar {
@@ -1265,15 +1276,24 @@ body {
 /* ── Móvil: columna única con scroll libre (< 900px) ── */
 @media (max-width: 900px) {
   :root {
+<<<<<<< HEAD
     --row-h: 32px;
+=======
+    --row-h: 44px;
+>>>>>>> pwa-migration
   }
 
   .gen-layout {
     flex-direction: column;
     height: auto;
     min-height: 100dvh;
+<<<<<<< HEAD
     overflow-y: auto;
     overflow-x: hidden;
+=======
+    overflow: visible;
+    position: relative;
+>>>>>>> pwa-migration
   }
 
   .sidebar {
@@ -1299,24 +1319,40 @@ body {
     background: var(--surface);
   }
 
+<<<<<<< HEAD
+=======
+  /* El main fluye normalmente, sin altura fija */
+>>>>>>> pwa-migration
   .main {
     flex: none;
     width: 100%;
     display: flex;
     flex-direction: column;
     overflow: visible;
+<<<<<<< HEAD
     min-height: 60vh;
   }
 
+=======
+  }
+
+  /* Topbar sin sticky — se queda en su lugar natural con el scroll */
+>>>>>>> pwa-migration
   .topbar {
     flex-wrap: wrap;
     padding: 8px 12px;
     flex-shrink: 0;
     gap: 6px;
+<<<<<<< HEAD
     position: sticky;
     top: 0;
     z-index: 10;
     background: var(--surface);
+=======
+    position: static;
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+>>>>>>> pwa-migration
   }
 
   .topbar-title {
@@ -1329,6 +1365,7 @@ body {
     flex-wrap: wrap;
   }
 
+<<<<<<< HEAD
   .calendar-wrap {
     overflow-x: auto;
     overflow-y: visible;
@@ -1432,20 +1469,39 @@ body {
 
   .calendar-wrap {
     overflow: auto;
+=======
+  /* Calendario: scroll horizontal interno, vertical por la página */
+  .calendar-wrap {
+    overflow-x: auto;
+    overflow-y: visible;
+>>>>>>> pwa-migration
     -webkit-overflow-scrolling: touch;
+    padding: 10px 12px 20px 12px;
   }
 
   .sched-table {
-    min-width: 500px;
+    min-width: 520px;
+    table-layout: fixed;
   }
 
-  .topbar {
-    flex-wrap: wrap;
-    padding: 8px 12px;
+  .sched-table tbody td {
+    height: var(--row-h);
   }
 
-  .topbar-actions {
-    gap: 4px;
+  /* Nombres completos sin recorte */
+  .cb-name {
+    font-size: 9px;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+    display: block;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .class-block {
+    padding: 3px 4px;
+    border-left-width: 2px;
+    overflow: visible;
   }
 
   .btn-action {
@@ -1458,43 +1514,19 @@ body {
     height: 26px;
   }
 
-  .cb-name {
-    font-size: 8px;
-    -webkit-line-clamp: 2;
-  }
-
   .cb-meta {
     display: none;
   }
 
-  /* oculta aula en móvil */
   .cb-badge {
     font-size: 6px;
   }
-
-  .class-block {
-    padding: 1px 3px;
-    border-left-width: 2px;
-  }
-
-  .sidebar-footer {
-    padding-bottom: max(14px, env(safe-area-inset-bottom));
-  }
-
-  .sidebar-scroll {
-    max-height: calc(52vh - 120px);
-    overflow-y: auto;
-  }
 }
 
-/* ── Pantallas muy pequeñas ── */
+/* ── Pantallas muy pequeñas (< 480px) ── */
 @media (max-width: 480px) {
   :root {
-    --row-h: 28px;
-  }
-
-  .sidebar {
-    max-height: 35vh;
+    --row-h: 40px;
   }
 
   .sched-table {
@@ -1502,24 +1534,12 @@ body {
   }
 
   .topbar-title {
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .counter-pill {
     font-size: 10px;
     padding: 2px 8px;
-  }
-
-  .cb-name {
-    font-size: 9px;
-  }
-
-  .cb-meta {
-    font-size: 8px;
-  }
-
-  .cb-badge {
-    font-size: 7px;
   }
 }
 
@@ -1566,18 +1586,34 @@ body.page-index-body {
 .harry-stamp {
   position: fixed;
   bottom: 12px;
+<<<<<<< HEAD
   right: 12px;
+=======
+  right: 16px;
+>>>>>>> pwa-migration
   display: flex;
   align-items: center;
   gap: 6px;
   z-index: 9999;
-  opacity: 0.7;
+  opacity: 0.6;
   pointer-events: none;
 }
 
+/* En móvil: fluye con el contenido, al final del todo */
+@media (max-width: 900px) {
+  .harry-stamp {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    justify-content: flex-end;
+    padding: 20px 16px 32px 16px;
+    opacity: 0.5;
+  }
+}
+
 .harry-stamp-img {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 4px;
   object-fit: cover;
 }
@@ -1592,4 +1628,75 @@ body.page-index-body {
 /* Ocultar footer antiguo en generador */
 .gen-layout~.harry-footer {
   display: none;
+}
+
+/* ── AVISO DE ACTUALIZACIÓN PWA ────────────────────────────── */
+.update-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  background: var(--accent-dark);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  animation: slideDown 0.25s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+.update-banner button {
+  background: #fff;
+  color: var(--accent-dark);
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.update-banner button:hover {
+  background: var(--surface2);
+}
+
+/* ── CÓDIGO DE CURSO ────────────────────────────────────────── */
+.curso-codigo {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-dark);
+  background: var(--accent-dim);
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* ── T (azul) vs P (rojo) ──────────────────────────────────── */
+.cb-badge.teoria-badge {
+  background: #2563eb;
+  color: #fff;
+}
+
+.cb-badge.practica-badge {
+  background: #dc2626;
+  color: #fff;
 }

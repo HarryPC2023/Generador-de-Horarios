@@ -15,10 +15,16 @@ let combosValidos = [];
 let currentIndex = 0;
 let maxCruces = 0;
 let seccionesData = {};
+<<<<<<< HEAD
 
 // cargaGlobal viene de generador.html (recuperada de sessionStorage)
 if (typeof cargaGlobal === 'undefined') var cargaGlobal = null;
 
+=======
+ 
+if (typeof cargaGlobal === 'undefined') var cargaGlobal = null;
+ 
+>>>>>>> pwa-migration
 // ── TOOLTIP ───────────────────────────────────────────────────
 let tooltipEl = null;
 document.addEventListener('DOMContentLoaded', () => {
@@ -59,17 +65,30 @@ function inicializar(cursos) {
 
   renderSidebar(seccionesData);
 }
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> pwa-migration
 // ── SIDEBAR ───────────────────────────────────────────────────
 function renderSidebar(data) {
   const container = document.getElementById('listaCursos');
   if (!container) return;
   container.innerHTML = '';
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> pwa-migration
   Object.entries(data).forEach(([curso, secMap]) => {
     const color = courseColors[curso] || '#06b6d4';
     const secciones = Object.keys(secMap).sort();
+<<<<<<< HEAD
 
+=======
+    const codigo    = (Object.values(secMap)[0] || {}).codigo || '';
+ 
+>>>>>>> pwa-migration
     const block = document.createElement('div');
     block.className = 'course-block';
     block.style.borderLeftColor = color;
@@ -78,7 +97,7 @@ function renderSidebar(data) {
     header.className = 'course-header';
     header.innerHTML = `
       <div class="course-dot" style="background:${color}"></div>
-      <div class="course-name" title="${curso}">${curso}</div>
+      <div class="course-name" title="${curso}">${codigo ? `<span class="curso-codigo">${codigo}</span> ` : ''}${curso}</div>
       <div class="course-chevron">▶</div>`;
 
     const profsDiv = document.createElement('div');
@@ -133,17 +152,28 @@ function generar() {
     showToast('Selecciona al menos una sección', 'error');
     return;
   }
+<<<<<<< HEAD
 
   const titleEl = document.getElementById('topbarTitle');
   if (titleEl) titleEl.innerHTML = '<span class="spinner"></span> Generando combinaciones...';
 
+=======
+ 
+  const titleEl = document.getElementById('topbarTitle');
+  if (titleEl) titleEl.innerHTML = '<span class="spinner"></span> Generando combinaciones...';
+ 
+>>>>>>> pwa-migration
   setTimeout(() => {
     try {
       const opciones = prepararOpciones(seleccion, cargaGlobal);
       combosValidos = generarCombos(opciones, maxCruces);
 
       if (!combosValidos.length) {
+<<<<<<< HEAD
         const titleEl = document.getElementById('topbarTitle');
+=======
+        const titleEl   = document.getElementById('topbarTitle');
+>>>>>>> pwa-migration
         const calWrapEl = document.getElementById('calendarWrap');
         if (titleEl) titleEl.innerHTML =
           '<span style="color:#ef4444">0 combinaciones</span> — sube los cruces o selecciona más secciones';
@@ -160,13 +190,21 @@ function generar() {
       currentIndex = 0;
       _setBotonesVisibles(true);
       dibujar(0);
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> pwa-migration
       // En móvil, scroll suave hasta el calendario
       if (window.innerWidth < 900) {
         const calWrap = document.getElementById('calendarWrap');
         if (calWrap) calWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> pwa-migration
     } catch (e) {
       const errEl = document.getElementById('topbarTitle');
       if (errEl) errEl.innerHTML =
@@ -174,12 +212,20 @@ function generar() {
     }
   }, 50);
 }
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> pwa-migration
 // ── BOTONES VISIBLES ─────────────────────────────────────────
 function _setBotonesVisibles(visible) {
-  const display = visible ? 'flex' : 'none';
+  const display       = visible ? 'flex'       : 'none';
   const displayInline = visible ? 'inline-flex' : 'none';
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> pwa-migration
   const navC = document.getElementById('navControls');
   const favB = document.getElementById('btnFav');
   const expI = document.getElementById('btnExportImg');
@@ -192,12 +238,21 @@ function _setBotonesVisibles(visible) {
 
 // ── DIBUJAR CALENDARIO ────────────────────────────────────────
 function dibujar(idx) {
+<<<<<<< HEAD
   const combo = combosValidos[idx];
   const counterEl = document.getElementById('counter');
   const topbarTitleEl = document.getElementById('topbarTitle');
   const calWrap = document.getElementById('calendarWrap');
 
   if (counterEl) counterEl.textContent = `${idx + 1} / ${combosValidos.length}`;
+=======
+  const combo         = combosValidos[idx];
+  const counterEl     = document.getElementById('counter');
+  const topbarTitleEl = document.getElementById('topbarTitle');
+  const calWrap       = document.getElementById('calendarWrap');
+ 
+  if (counterEl)     counterEl.textContent = `${idx + 1} / ${combosValidos.length}`;
+>>>>>>> pwa-migration
   if (topbarTitleEl) topbarTitleEl.innerHTML =
     `Opción <span>${idx + 1}</span> de <span>${combosValidos.length}</span> combinaciones`;
 
@@ -217,7 +272,12 @@ function dibujar(idx) {
   });
   html += `</tbody></table>`;
   if (calWrap) calWrap.innerHTML = html;
+<<<<<<< HEAD
 
+=======
+ 
+  // ── Construir bloques por día ─────────────────────────────
+>>>>>>> pwa-migration
   const dayBlocks = {};
   combo.forEach((sec, ci) => {
     const color = courseColors[sec.nombre] || PALETTE[ci % PALETTE.length];
@@ -230,7 +290,47 @@ function dibujar(idx) {
       dayBlocks[dIdx].push({ sec, cl, color });
     });
   });
+<<<<<<< HEAD
 
+=======
+ 
+  // ── Detectar columnas con cruces (solo en móvil) ──────────
+  const colsConCruces = new Set();
+  if (window.innerWidth < 900) {
+    Object.entries(dayBlocks).forEach(([dIdx, blocks]) => {
+      outer:
+      for (let i = 0; i < blocks.length; i++) {
+        for (let j = i + 1; j < blocks.length; j++) {
+          const a = blocks[i].cl;
+          const b = blocks[j].cl;
+          const overlap = Math.max(0,
+            Math.min(a.fin, b.fin) - Math.max(a.ini, b.ini));
+          if (overlap > 0) {
+            colsConCruces.add(parseInt(dIdx));
+            break outer;
+          }
+        }
+      }
+    });
+ 
+    // Aplicar ancho doble a columnas con cruces
+    if (colsConCruces.size > 0) {
+      const table = calWrap.querySelector('.sched-table');
+      if (table) {
+        colsConCruces.forEach(dIdx => {
+          const colIndex = dIdx + 2; // +1 por th hora, +1 por nth-child base 1
+          table.querySelectorAll(
+            `tr td:nth-child(${colIndex}), tr th:nth-child(${colIndex})`
+          ).forEach(cell => {
+            cell.style.minWidth = '160px';
+          });
+        });
+      }
+    }
+  }
+ 
+  // ── Posicionar bloques ────────────────────────────────────
+>>>>>>> pwa-migration
   Object.entries(dayBlocks).forEach(([dIdx, blocks]) => {
     blocks.sort((a, b) => a.cl.ini - b.cl.ini);
 
@@ -272,8 +372,13 @@ function dibujar(idx) {
 
       const esTeoria = cl.tipo === 'T' || /TEOR/i.test(cl.tipo);
       const tipoLabel = esTeoria ? 'T' : 'P';
+<<<<<<< HEAD
       const tipoClass = esTeoria ? 'teoria-badge' : '';
 
+=======
+      const tipoClass = esTeoria ? 'teoria-badge' : 'practica-badge';
+ 
+>>>>>>> pwa-migration
       const block = document.createElement('div');
       block.className = 'class-block';
       block.style.cssText = `
@@ -329,7 +434,11 @@ function moveTooltip(e) {
 function hideTip() {
   if (tooltipEl) tooltipEl.style.display = 'none';
 }
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> pwa-migration
 // ── FAVORITOS ─────────────────────────────────────────────────
 function guardarFavorito() {
   if (!combosValidos.length) return;
@@ -430,6 +539,7 @@ function exportarExcel() {
     showToast('Genera un horario primero', 'error');
     return;
   }
+<<<<<<< HEAD
 
   const combo = combosValidos[currentIndex];
   const DIAS_XLS = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
@@ -437,6 +547,14 @@ function exportarExcel() {
   const fmt = n => `${Math.floor(n / 100)}:${String(n % 100).padStart(2, '0')}`;
 
   // Hoja 1: Calendario
+=======
+ 
+  const combo          = combosValidos[currentIndex];
+  const DIAS_XLS       = ['LUNES','MARTES','MIERCOLES','JUEVES','VIERNES','SABADO'];
+  const DIAS_LABEL_XLS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const fmt = n => `${Math.floor(n / 100)}:${String(n % 100).padStart(2, '0')}`;
+ 
+>>>>>>> pwa-migration
   const horasUnicas = new Set();
   combo.forEach(sec => sec.clases.forEach(cl => {
     for (let h = Math.floor(cl.ini / 100); h < Math.floor(cl.fin / 100); h++) {
@@ -464,37 +582,73 @@ function exportarExcel() {
     });
     calendarioData.push(fila);
   });
+<<<<<<< HEAD
 
   // Hoja 2: Detalle
   const detalleData = [
     ['Curso', 'Sección', 'Docente', 'Tipo', 'Día', 'Hora inicio', 'Hora fin', 'Aula']
+=======
+ 
+  const detalleData = [
+    ['Curso','Código','Sección','Docente','Tipo','Día','Hora inicio','Hora fin','Aula']
+>>>>>>> pwa-migration
   ];
-  combo.forEach(sec => {
-    sec.clases.forEach(cl => {
+  // Agrupa por curso (orden alfabético) y deja una fila en blanco entre cursos
+  // para que el detalle se lea de forma más ordenada.
+  const comboOrdenado = [...combo].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+  let cursoAnterior = null;
+  comboOrdenado.forEach(sec => {
+    if (cursoAnterior !== null && cursoAnterior !== sec.nombre) {
+      detalleData.push(['', '', '', '', '', '', '', '', '']);
+    }
+    cursoAnterior = sec.nombre;
+    [...sec.clases].sort((a, b) => DIAS_XLS.indexOf(a.dia) - DIAS_XLS.indexOf(b.dia)).forEach(cl => {
       detalleData.push([
         sec.nombre,
+        sec.codigo || '—',
         sec.seccion,
         sec.docente,
         cl.tipo === 'T' ? 'Teoría' : 'Práctica',
-        cl.dia,
+        DIAS_LABEL_XLS[DIAS_XLS.indexOf(cl.dia)] || cl.dia,
         fmt(cl.ini),
         fmt(cl.fin),
         cl.aula || '—'
       ]);
     });
   });
+<<<<<<< HEAD
 
+=======
+ 
+  // ── Ancho de columna automático según el contenido más largo ──
+  function anchoAutomatico(data, minWch = 8, maxWch = 45) {
+    const cols = data[0].length;
+    const anchos = new Array(cols).fill(minWch);
+    data.forEach(fila => {
+      fila.forEach((celda, i) => {
+        const largo = String(celda ?? '').length + 2;
+        anchos[i] = Math.max(anchos[i], Math.min(largo, maxWch));
+      });
+    });
+    return anchos.map(w => ({ wch: w }));
+  }
+ 
+>>>>>>> pwa-migration
   const wb = XLSX.utils.book_new();
 
   const wsCalendario = XLSX.utils.aoa_to_sheet(calendarioData);
-  wsCalendario['!cols'] = [{ wch: 8 }, ...DIAS_LABEL_XLS.map(() => ({ wch: 25 }))];
+  wsCalendario['!cols'] = anchoAutomatico(calendarioData, 8, 40);
   XLSX.utils.book_append_sheet(wb, wsCalendario, 'Calendario');
 
   const wsDetalle = XLSX.utils.aoa_to_sheet(detalleData);
+<<<<<<< HEAD
   wsDetalle['!cols'] = [
     { wch: 30 }, { wch: 10 }, { wch: 30 }, { wch: 10 },
     { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 15 }
   ];
+=======
+  wsDetalle['!cols'] = anchoAutomatico(detalleData, 10, 32);
+>>>>>>> pwa-migration
   XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle');
 
   XLSX.writeFile(wb, `horario_opcion_${currentIndex + 1}.xlsx`);

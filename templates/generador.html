@@ -72,8 +72,10 @@
           </div>
           <button class="btn-action" id="btnFav" onclick="guardarFavorito()" style="display:none"
             title="Guardar como favorito">★ Guardar</button>
-          <button class="btn-action btn-export" id="btnExport" onclick="exportarImagen()" style="display:none"
-            title="Exportar como imagen">⬇ Exportar</button>
+          <button class="btn-action btn-export" id="btnExportImg" onclick="exportarImagen()" style="display:none"
+            title="Exportar como imagen">⬇ PNG</button>
+          <button class="btn-action btn-export" id="btnExportXls" onclick="exportarExcel()" style="display:none"
+            title="Exportar como Excel">⬇ Excel</button>
           <button class="btn-action btn-favs" onclick="toggleFavoritos()" title="Ver favoritos">☆ Favoritos</button>
         </div>
       </div>
@@ -128,12 +130,43 @@
 
     inicializar(cursosSeleccionados);
   </script>
-  <!-- ── Registro PWA ── -->
+  <!-- ── Registro PWA + aviso de actualización ── -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js')
-        .then(() => console.log('SW registrado'))
+        .then(reg => {
+          console.log('SW registrado');
+          if (reg.waiting) mostrarAvisoActualizacion(reg.waiting);
+          reg.addEventListener('updatefound', () => {
+            const nuevoSW = reg.installing;
+            if (!nuevoSW) return;
+            nuevoSW.addEventListener('statechange', () => {
+              if (nuevoSW.state === 'installed' && navigator.serviceWorker.controller) {
+                mostrarAvisoActualizacion(nuevoSW);
+              }
+            });
+          });
+        })
         .catch(err => console.warn('SW error:', err));
+
+      let recargando = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (recargando) return;
+        recargando = true;
+        window.location.reload();
+      });
+    }
+
+    function mostrarAvisoActualizacion(sw) {
+      if (document.querySelector('.update-banner')) return;
+      const banner = document.createElement('div');
+      banner.className = 'update-banner';
+      banner.innerHTML = `🔄 Hay una nueva versión disponible <button type="button">Actualizar</button>`;
+      document.body.appendChild(banner);
+      banner.querySelector('button').onclick = () => {
+        sw.postMessage('SKIP_WAITING');
+        banner.remove();
+      };
     }
   </script>
 </body>

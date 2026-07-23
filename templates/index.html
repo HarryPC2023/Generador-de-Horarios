@@ -54,6 +54,16 @@
                 </button>
 
                 <div id="uploadStatus" class="upload-status"></div>
+
+                <!-- Guardar / Limpiar progreso: solo visible cuando hay algo cargado -->
+                <div id="persistActions" style="display:none; gap:8px; margin-top:10px;">
+                    <button id="btnGuardar" class="btn-action" style="flex:1;" title="Conservar archivo y selección para la próxima vez">
+                        💾 Guardar
+                    </button>
+                    <button id="btnLimpiarTodo" class="btn-action" style="flex:1; color:#ef4444;" title="Borrar archivo y selección guardados">
+                        🗑 Limpiar
+                    </button>
+                </div>
             </div>
 
             <!-- ── CARD 2: SELECCIONAR CURSOS ── -->
@@ -63,7 +73,7 @@
                 <div class="card-desc">Busca y elige los cursos que deseas incluir</div>
 
                 <div class="search-wrap">
-                    <input type="text" id="courseSearch" class="search-input" placeholder="Buscar curso por nombre...">
+                    <input type="text" id="courseSearch" class="search-input" placeholder="Buscar por nombre o código de curso...">
                     <button id="clearSearch" class="clear-search-btn">✕</button>
                 </div>
 
@@ -75,6 +85,14 @@
                         <span class="sel-label">Seleccionados</span>
                         <span class="sel-count" id="selCount">0</span>
                     </div>
+
+                    <!-- Chips de cursos seleccionados, cada uno se puede quitar individualmente -->
+                    <div class="sel-chips" id="selChips"></div>
+
+                    <button id="btnClearSel" class="btn-action" style="width:100%; margin-bottom:10px; display:none; color:#ef4444;">
+                        ✕ Limpiar selección
+                    </button>
+
                     <button id="btnNext" class="btn-primary btn-next" disabled>
                         Generar horarios →
                     </button>
@@ -83,6 +101,8 @@
 
         </div>
     </div>
+
+    <div class="toast" id="toast"></div>
 
     <!-- ── Scripts ── -->
     <!-- parser.js debe cargarse antes que este script -->
@@ -99,11 +119,26 @@
         const cursosLista = document.getElementById('cursosLista');
         const courseSearch = document.getElementById('courseSearch');
         const clearSearch = document.getElementById('clearSearch');
+        const persistActions = document.getElementById('persistActions');
+        const btnClearSel = document.getElementById('btnClearSel');
 
         // Almacena la carga horaria parseada y los cursos seleccionados
         // Equivale a carga_horaria = {} en app.py
         let cargaGlobal = null;
         let cursosSeleccionados = new Set();
+        let nombreArchivoActual = '';
+
+        // Claves de guardado persistente (sobreviven a cerrar la app/pestaña)
+        const LS_CARGA   = 'horarioGen_carga';
+        const LS_NOMBRE  = 'horarioGen_archivo';
+        const LS_SEL     = 'horarioGen_seleccion';
+
+        // ── Código del curso a partir de la carga ───────────────
+        function getCodigoCurso(nombre) {
+            if (!cargaGlobal || !cargaGlobal[nombre]) return '';
+            const secciones = Object.values(cargaGlobal[nombre]);
+            return secciones.length ? (secciones[0].codigo || '') : '';
+        }
 
         // ── 1. Archivo seleccionado: muestra nombre y habilita botón ──
         fileInput.onchange = () => {
@@ -117,8 +152,6 @@
         };
 
         // ── 2. Cargar archivo: llama a parsearExcel() de parser.js ──
-        // Antes hacía fetch('/upload') al servidor Flask.
-        // Ahora parsearExcel() lee el archivo directo en el navegador.
         btnUpload.onclick = () => {
             if (!fileInput.files.length) return;
 
@@ -128,22 +161,25 @@
             fileInfo.innerHTML = '⏳ Cargando: ' + file.name;
             uploadStatus.innerHTML = '<span class="spinner"></span> Procesando archivo...';
 
-            // parsearExcel devuelve una Promise (igual que una petición al servidor)
+            // Al cargar un archivo nuevo se limpia la selección anterior
+            cursosSeleccionados = new Set();
+
             parsearExcel(file)
                 .then(carga => {
                     cargaGlobal = carga;
+                    nombreArchivoActual = file.name;
 
                     // Guarda la carga en sessionStorage para que generador.html la use
-                    // Equivale a carga_horaria = {} en memoria del servidor Flask
                     sessionStorage.setItem('cargaHoraria', JSON.stringify(carga));
 
                     const cursos = Object.keys(carga).sort();
                     uploadStatus.innerHTML =
                         `<span style="color:#10b981">✅ ¡Éxito! ${cursos.length} cursos cargados.</span>`;
 
-                    // Construye la lista de cursos — equivale al {% for %} de Jinja
                     construirListaCursos(cursos);
                     cardCursos.style.display = 'block';
+                    persistActions.style.display = 'flex';
+                    actualizarSeleccion();
                 })
                 .catch(err => {
                     uploadStatus.innerHTML =
@@ -153,29 +189,38 @@
         };
 
         // ── 3. Construir lista de cursos dinámicamente ──────────
-        // Equivale al {% for nombre in cursos_nombres %} de Jinja
         function construirListaCursos(cursos) {
             cursosLista.innerHTML = '';
             cursos.forEach(nombre => {
+                const codigo = getCodigoCurso(nombre);
                 const div = document.createElement('div');
                 div.className = 'curso-item';
+                div.dataset.nombre = nombre;
                 div.innerHTML = `
-        <span class="curso-nombre">${nombre}</span>
+        <span class="curso-nombre">${codigo ? `<span class="curso-codigo">${codigo}</span> ` : ''}${nombre}</span>
         <span class="curso-check">✔</span>
       `;
                 div.onclick = () => toggleCursoSeleccionado(div, nombre);
+                if (cursosSeleccionados.has(nombre)) {
+                    div.classList.add('seleccionado');
+                    div.querySelector('.curso-check').style.display = 'inline';
+                }
                 cursosLista.appendChild(div);
             });
         }
 
-        // ── 4. Buscador: filtrar cursos por nombre ──────────────
+        // ── 4. Buscador: case-insensitive, sin tildes, coincidencia parcial ──
+        // (busca tanto en el nombre como en el código del curso, ya que
+        // ambos viven dentro de .curso-nombre)
+        function normalizarBusqueda(s) {
+            return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+
         courseSearch.addEventListener('input', e => {
-            const q = e.target.value.toLowerCase()
-                .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const q = normalizarBusqueda(e.target.value);
             clearSearch.style.display = q.length > 0 ? 'block' : 'none';
             document.querySelectorAll('.curso-item').forEach(item => {
-                const texto = item.querySelector('.curso-nombre').innerText.toLowerCase()
-                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const texto = normalizarBusqueda(item.querySelector('.curso-nombre').innerText);
                 item.style.display = texto.includes(q) ? 'flex' : 'none';
             });
         });
@@ -189,7 +234,7 @@
             courseSearch.focus();
         };
 
-        // ── 5. Selección de cursos: toggle ✔ y contador ─────────
+        // ── 5. Selección de cursos: toggle ✔, chips y contador ───
         function toggleCursoSeleccionado(elemento, nombre) {
             const checkIcon = elemento.querySelector('.curso-check');
             const estaSeleccionado = elemento.classList.toggle('seleccionado');
@@ -202,26 +247,175 @@
                 cursosSeleccionados.delete(nombre);
             }
 
-            document.getElementById('selCount').innerText = cursosSeleccionados.size;
-            document.getElementById('btnNext').disabled = cursosSeleccionados.size === 0;
+            actualizarSeleccion();
         }
 
+        // Sincroniza contador + chips + botón "Generar" cada vez que cambia la selección
+        function actualizarSeleccion() {
+            document.getElementById('selCount').innerText = cursosSeleccionados.size;
+            document.getElementById('btnNext').disabled = cursosSeleccionados.size === 0;
+            renderChips();
+        }
+
+        function renderChips() {
+            const chipsWrap = document.getElementById('selChips');
+            chipsWrap.innerHTML = '';
+            [...cursosSeleccionados].forEach(nombre => {
+                const chip = document.createElement('div');
+                chip.className = 'chip';
+                chip.innerHTML = `<span>${nombre}</span><button type="button" title="Quitar de la selección">✕</button>`;
+                chip.querySelector('button').onclick = (ev) => {
+                    ev.stopPropagation();
+                    const item = document.querySelector(`.curso-item[data-nombre="${CSS.escape(nombre)}"]`);
+                    if (item) {
+                        toggleCursoSeleccionado(item, nombre);
+                    } else {
+                        cursosSeleccionados.delete(nombre);
+                        actualizarSeleccion();
+                    }
+                };
+                chipsWrap.appendChild(chip);
+            });
+            btnClearSel.style.display = cursosSeleccionados.size ? 'block' : 'none';
+        }
+
+        // Botón "Limpiar selección": desmarca todos los cursos de golpe
+        btnClearSel.onclick = () => {
+            document.querySelectorAll('.curso-item.seleccionado').forEach(item => {
+                item.classList.remove('seleccionado');
+                item.querySelector('.curso-check').style.display = 'none';
+            });
+            cursosSeleccionados.clear();
+            actualizarSeleccion();
+        };
+
         // ── 6. Ir al generador ──────────────────────────────────
-        // Antes era window.location.href = '/generador?curso=...'
-        // Ahora pasa los cursos por URL igual, generador.html los lee
         document.getElementById('btnNext').onclick = () => {
             if (!cursosSeleccionados.size) return;
             const params = new URLSearchParams();
             cursosSeleccionados.forEach(c => params.append('curso', c));
             window.location.href = 'generador.html?' + params.toString();
         };
+
+        // ── 7. Guardar / Limpiar progreso (persiste al cerrar la app) ──
+        document.getElementById('btnGuardar').onclick = () => {
+            if (!cargaGlobal) {
+                showToast('Primero carga un archivo', 'error');
+                return;
+            }
+            try {
+                localStorage.setItem(LS_CARGA, JSON.stringify(cargaGlobal));
+                localStorage.setItem(LS_NOMBRE, nombreArchivoActual);
+                localStorage.setItem(LS_SEL, JSON.stringify([...cursosSeleccionados]));
+                showToast('Progreso guardado ✓ — lo verás al volver a abrir la app', 'success');
+            } catch (e) {
+                showToast('No se pudo guardar (archivo muy grande para el navegador)', 'error');
+            }
+        };
+
+        document.getElementById('btnLimpiarTodo').onclick = () => {
+            localStorage.removeItem(LS_CARGA);
+            localStorage.removeItem(LS_NOMBRE);
+            localStorage.removeItem(LS_SEL);
+            sessionStorage.removeItem('cargaHoraria');
+
+            cargaGlobal = null;
+            cursosSeleccionados = new Set();
+            nombreArchivoActual = '';
+
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            uploadZone.classList.remove('active');
+            btnUpload.disabled = true;
+            uploadStatus.innerHTML = '';
+            cardCursos.style.display = 'none';
+            cursosLista.innerHTML = '';
+            courseSearch.value = '';
+            clearSearch.style.display = 'none';
+            persistActions.style.display = 'none';
+
+            showToast('Todo limpio — listo para cargar un nuevo archivo', 'success');
+        };
+
+        // ── Restaurar progreso guardado al abrir la app ──────────
+        (function restaurarProgreso() {
+            const cargaGuardada = localStorage.getItem(LS_CARGA);
+            if (!cargaGuardada) return;
+
+            try {
+                cargaGlobal = JSON.parse(cargaGuardada);
+                nombreArchivoActual = localStorage.getItem(LS_NOMBRE) || '';
+                const seleccionGuardada = JSON.parse(localStorage.getItem(LS_SEL) || '[]');
+
+                sessionStorage.setItem('cargaHoraria', cargaGuardada);
+
+                if (nombreArchivoActual) {
+                    fileInfo.style.display = 'flex';
+                    fileInfo.innerHTML = '📄 ' + nombreArchivoActual + ' (guardado)';
+                }
+
+                const cursos = Object.keys(cargaGlobal).sort();
+                uploadStatus.innerHTML =
+                    `<span style="color:#10b981">✅ ${cursos.length} cursos restaurados de tu última sesión.</span>`;
+
+                seleccionGuardada.forEach(c => cursosSeleccionados.add(c));
+
+                construirListaCursos(cursos);
+                cardCursos.style.display = 'block';
+                persistActions.style.display = 'flex';
+                actualizarSeleccion();
+            } catch (e) {
+                console.warn('No se pudo restaurar el progreso guardado:', e);
+            }
+        })();
+
+        // ── Toast ─────────────────────────────────────────────────
+        function showToast(msg, type = 'info') {
+            const t = document.getElementById('toast');
+            if (!t) return;
+            t.textContent = msg;
+            t.className = `toast show ${type}`;
+            setTimeout(() => { t.className = 'toast'; }, 3000);
+        }
     </script>
-    <!-- ── Registro PWA ── -->
+
+    <!-- ── Registro PWA + aviso de actualización ── -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('SW registrado'))
+                .then(reg => {
+                    console.log('SW registrado');
+                    if (reg.waiting) mostrarAvisoActualizacion(reg.waiting);
+                    reg.addEventListener('updatefound', () => {
+                        const nuevoSW = reg.installing;
+                        if (!nuevoSW) return;
+                        nuevoSW.addEventListener('statechange', () => {
+                            if (nuevoSW.state === 'installed' && navigator.serviceWorker.controller) {
+                                mostrarAvisoActualizacion(nuevoSW);
+                            }
+                        });
+                    });
+                })
                 .catch(err => console.warn('SW error:', err));
+
+            let recargando = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (recargando) return;
+                recargando = true;
+                window.location.reload();
+            });
+        }
+
+        function mostrarAvisoActualizacion(sw) {
+            if (document.querySelector('.update-banner')) return;
+            const banner = document.createElement('div');
+            banner.className = 'update-banner';
+            banner.innerHTML = `🔄 Hay una nueva versión disponible <button type="button">Actualizar</button>`;
+            document.body.appendChild(banner);
+            banner.querySelector('button').onclick = () => {
+                sw.postMessage('SKIP_WAITING');
+                banner.remove();
+            };
         }
     </script>
 </body>

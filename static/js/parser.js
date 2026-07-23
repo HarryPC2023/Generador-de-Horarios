@@ -177,6 +177,7 @@ function parsearExcel(file) {
 
                     const nombre = normStr(row[col.nombre] ?? '');
                     const seccion = normStr(row[col.seccion] ?? '');
+                    const codigo = 'codigo' in col ? normStr(row[col.codigo] ?? '') : '';
                     const docente = 'docente' in col ? normStr(row[col.docente] ?? '') || 'POR ASIGNAR' : 'POR ASIGNAR';
                     const tipo = 'tipo' in col ? normStr(row[col.tipo] ?? '').toUpperCase() || 'P' : 'P';
                     const diaRaw = 'dia' in col ? row[col.dia] : '';
@@ -196,7 +197,7 @@ function parsearExcel(file) {
 
                     // Construye la estructura carga[nombre][seccion]
                     if (!(nombre in carga)) carga[nombre] = {};
-                    if (!(seccion in carga[nombre])) carga[nombre][seccion] = { docente, clases: [] };
+                    if (!(seccion in carga[nombre])) carga[nombre][seccion] = { docente, codigo, clases: [] };
 
                     carga[nombre][seccion].clases.push({ dia, ini, fin, tipo, aula });
                 }

@@ -2,7 +2,7 @@
 // sw.js — Service Worker
 // Permite instalación como PWA y funcionamiento offline
 // ============================================================
-const CACHE_NAME = 'horariogen-v16';
+const CACHE_NAME = 'horariogen-v17';
  
 // Lista de archivos que se guardan en caché al instalar la app
 const ARCHIVOS_CACHE = [
@@ -22,8 +22,20 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(ARCHIVOS_CACHE))
-      .then(() => self.skipWaiting())
+    // OJO: ya no se llama a self.skipWaiting() aquí.
+    // La nueva versión se queda "esperando" hasta que la página
+    // se lo pida (ver mensaje 'SKIP_WAITING' abajo), así el usuario
+    // decide cuándo actualizar en vez de que pase de golpe.
   );
+});
+
+// ── ACTUALIZACIÓN BAJO DEMANDA ────────────────────────────────
+// El front-end (index.html / generador.html) envía este mensaje
+// cuando el usuario pulsa "Actualizar ahora" en el aviso de nueva versión.
+self.addEventListener('message', event => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
  
 // ── ACTIVATE: limpia cachés viejas ───────────────────────────

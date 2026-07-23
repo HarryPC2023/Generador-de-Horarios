@@ -68,6 +68,7 @@ function renderSidebar(data) {
   Object.entries(data).forEach(([curso, secMap]) => {
     const color     = courseColors[curso] || '#06b6d4';
     const secciones = Object.keys(secMap).sort();
+    const codigo    = (Object.values(secMap)[0] || {}).codigo || '';
  
     const block = document.createElement('div');
     block.className = 'course-block';
@@ -77,7 +78,7 @@ function renderSidebar(data) {
     header.className = 'course-header';
     header.innerHTML = `
       <div class="course-dot" style="background:${color}"></div>
-      <div class="course-name" title="${curso}">${curso}</div>
+      <div class="course-name" title="${curso}">${codigo ? `<span class="curso-codigo">${codigo}</span> ` : ''}${curso}</div>
       <div class="course-chevron">▶</div>`;
  
     const profsDiv = document.createElement('div');
@@ -308,7 +309,7 @@ function dibujar(idx) {
  
       const esTeoria  = cl.tipo === 'T' || /TEOR/i.test(cl.tipo);
       const tipoLabel = esTeoria ? 'T' : 'P';
-      const tipoClass = esTeoria ? 'teoria-badge' : '';
+      const tipoClass = esTeoria ? 'teoria-badge' : 'practica-badge';
  
       const block = document.createElement('div');
       block.className = 'class-block';
@@ -501,16 +502,25 @@ function exportarExcel() {
   });
  
   const detalleData = [
-    ['Curso','Sección','Docente','Tipo','Día','Hora inicio','Hora fin','Aula']
+    ['Curso','Código','Sección','Docente','Tipo','Día','Hora inicio','Hora fin','Aula']
   ];
-  combo.forEach(sec => {
-    sec.clases.forEach(cl => {
+  // Agrupa por curso (orden alfabético) y deja una fila en blanco entre cursos
+  // para que el detalle se lea de forma más ordenada.
+  const comboOrdenado = [...combo].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+  let cursoAnterior = null;
+  comboOrdenado.forEach(sec => {
+    if (cursoAnterior !== null && cursoAnterior !== sec.nombre) {
+      detalleData.push(['', '', '', '', '', '', '', '', '']);
+    }
+    cursoAnterior = sec.nombre;
+    [...sec.clases].sort((a, b) => DIAS_XLS.indexOf(a.dia) - DIAS_XLS.indexOf(b.dia)).forEach(cl => {
       detalleData.push([
         sec.nombre,
+        sec.codigo || '—',
         sec.seccion,
         sec.docente,
         cl.tipo === 'T' ? 'Teoría' : 'Práctica',
-        cl.dia,
+        DIAS_LABEL_XLS[DIAS_XLS.indexOf(cl.dia)] || cl.dia,
         fmt(cl.ini),
         fmt(cl.fin),
         cl.aula || '—'
@@ -518,17 +528,27 @@ function exportarExcel() {
     });
   });
  
+  // ── Ancho de columna automático según el contenido más largo ──
+  function anchoAutomatico(data, minWch = 8, maxWch = 45) {
+    const cols = data[0].length;
+    const anchos = new Array(cols).fill(minWch);
+    data.forEach(fila => {
+      fila.forEach((celda, i) => {
+        const largo = String(celda ?? '').length + 2;
+        anchos[i] = Math.max(anchos[i], Math.min(largo, maxWch));
+      });
+    });
+    return anchos.map(w => ({ wch: w }));
+  }
+ 
   const wb = XLSX.utils.book_new();
  
   const wsCalendario = XLSX.utils.aoa_to_sheet(calendarioData);
-  wsCalendario['!cols'] = [{ wch: 8 }, ...DIAS_LABEL_XLS.map(() => ({ wch: 25 }))];
+  wsCalendario['!cols'] = anchoAutomatico(calendarioData, 8, 40);
   XLSX.utils.book_append_sheet(wb, wsCalendario, 'Calendario');
  
   const wsDetalle = XLSX.utils.aoa_to_sheet(detalleData);
-  wsDetalle['!cols'] = [
-    { wch: 30 },{ wch: 10 },{ wch: 30 },{ wch: 10 },
-    { wch: 12 },{ wch: 12 },{ wch: 12 },{ wch: 15 }
-  ];
+  wsDetalle['!cols'] = anchoAutomatico(detalleData, 10, 32);
   XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle');
  
   XLSX.writeFile(wb, `horario_opcion_${currentIndex + 1}.xlsx`);

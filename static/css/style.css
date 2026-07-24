@@ -1168,23 +1168,24 @@ body {
 /* ── TOAST ── */
 .toast {
   position: fixed;
-  bottom: 70px;
+  bottom: 60px;
   left: 50%;
-  margin-left: -100px;
-  width: 200px;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(90vw, 340px);
   text-align: center;
   background: var(--text);
   color: #fff;
-  padding: 10px 20px;
+  padding: 10px 18px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.4;
   opacity: 0;
-  bottom: 60px;
   transition: opacity 0.3s;
   pointer-events: none;
   z-index: 500;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .toast.show {

@@ -57,10 +57,12 @@
 
                 <!-- Guardar / Limpiar progreso: solo visible cuando hay algo cargado -->
                 <div id="persistActions" style="display:none; gap:8px; margin-top:10px;">
-                    <button id="btnGuardar" class="btn-action" style="flex:1;" title="Conservar archivo y selección para la próxima vez">
+                    <button id="btnGuardar" class="btn-action" style="flex:1;"
+                        title="Conservar archivo y selección para la próxima vez">
                         💾 Guardar
                     </button>
-                    <button id="btnLimpiarTodo" class="btn-action" style="flex:1; color:#ef4444;" title="Borrar archivo y selección guardados">
+                    <button id="btnLimpiarTodo" class="btn-action" style="flex:1; color:#ef4444;"
+                        title="Borrar archivo y selección guardados">
                         🗑 Limpiar
                     </button>
                 </div>
@@ -73,7 +75,8 @@
                 <div class="card-desc">Busca y elige los cursos que deseas incluir</div>
 
                 <div class="search-wrap">
-                    <input type="text" id="courseSearch" class="search-input" placeholder="Buscar por nombre o código de curso...">
+                    <input type="text" id="courseSearch" class="search-input"
+                        placeholder="Buscar por nombre o código de curso...">
                     <button id="clearSearch" class="clear-search-btn">✕</button>
                 </div>
 
@@ -89,7 +92,8 @@
                     <!-- Chips de cursos seleccionados, cada uno se puede quitar individualmente -->
                     <div class="sel-chips" id="selChips"></div>
 
-                    <button id="btnClearSel" class="btn-action" style="width:100%; margin-bottom:10px; display:none; color:#ef4444;">
+                    <button id="btnClearSel" class="btn-action"
+                        style="width:100%; margin-bottom:10px; display:none; color:#ef4444;">
                         ✕ Limpiar selección
                     </button>
 
@@ -129,9 +133,9 @@
         let nombreArchivoActual = '';
 
         // Claves de guardado persistente (sobreviven a cerrar la app/pestaña)
-        const LS_CARGA   = 'horarioGen_carga';
-        const LS_NOMBRE  = 'horarioGen_archivo';
-        const LS_SEL     = 'horarioGen_seleccion';
+        const LS_CARGA = 'horarioGen_carga';
+        const LS_NOMBRE = 'horarioGen_archivo';
+        const LS_SEL = 'horarioGen_seleccion';
 
         // ── Código del curso a partir de la carga ───────────────
         function getCodigoCurso(nombre) {

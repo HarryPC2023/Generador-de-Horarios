@@ -1171,8 +1171,7 @@ body {
   bottom: 60px;
   left: 50%;
   transform: translateX(-50%);
-  width: max-content;
-  max-width: min(90vw, 340px);
+  max-width: min(85vw, 300px);
   text-align: center;
   background: var(--text);
   color: #fff;
@@ -1186,6 +1185,8 @@ body {
   pointer-events: none;
   z-index: 500;
   white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .toast.show {

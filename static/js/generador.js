@@ -1,23 +1,23 @@
 // ── CONSTANTES ────────────────────────────────────────────────
-const DIAS       = ["LUNES","MARTES","MIERCOLES","JUEVES","VIERNES","SABADO"];
-const DIAS_LABEL = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-const ROW_H      = 38;
+const DIAS = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"];
+const DIAS_LABEL = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const ROW_H = 38;
 const HOUR_START = 7;
-const HOUR_END   = 22;
- 
+const HOUR_END = 22;
+
 const PALETTE = [
-  "#0ea5e9","#8b5cf6","#10b981","#f59e0b","#ef4444",
-  "#0891b2","#16a34a","#84cc16","#f97316","#6366f1"
+  "#0ea5e9", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444",
+  "#0891b2", "#16a34a", "#84cc16", "#f97316", "#6366f1"
 ];
- 
-let courseColors  = {};
+
+let courseColors = {};
 let combosValidos = [];
-let currentIndex  = 0;
-let maxCruces     = 0;
+let currentIndex = 0;
+let maxCruces = 0;
 let seccionesData = {};
- 
+
 if (typeof cargaGlobal === 'undefined') var cargaGlobal = null;
- 
+
 // ── TOOLTIP ───────────────────────────────────────────────────
 let tooltipEl = null;
 document.addEventListener('DOMContentLoaded', () => {
@@ -30,89 +30,89 @@ document.addEventListener('DOMContentLoaded', () => {
     setCruces(0);
   }
 });
- 
+
 // ── INICIALIZAR ───────────────────────────────────────────────
 function inicializar(cursos) {
   if (!cursos || !cursos.length) {
     window.location.href = 'index.html';
     return;
   }
- 
+
   if (!cargaGlobal) {
     const listaCursos = document.getElementById('listaCursos');
     if (listaCursos) listaCursos.innerHTML =
       '<div style="color:#ef4444;font-size:12px">Sin datos. <a href="index.html">Vuelve al inicio</a> y carga el Excel.</div>';
     return;
   }
- 
+
   cursos.forEach((c, i) => {
     courseColors[c] = PALETTE[i % PALETTE.length];
   });
- 
+
   seccionesData = {};
   cursos.forEach(curso => {
     if (curso in cargaGlobal) {
       seccionesData[curso] = cargaGlobal[curso];
     }
   });
- 
+
   renderSidebar(seccionesData);
 }
- 
+
 // ── SIDEBAR ───────────────────────────────────────────────────
 function renderSidebar(data) {
   const container = document.getElementById('listaCursos');
   if (!container) return;
   container.innerHTML = '';
- 
+
   Object.entries(data).forEach(([curso, secMap]) => {
-    const color     = courseColors[curso] || '#06b6d4';
+    const color = courseColors[curso] || '#06b6d4';
     const secciones = Object.keys(secMap).sort();
-    const codigo    = (Object.values(secMap)[0] || {}).codigo || '';
- 
+    const codigo = (Object.values(secMap)[0] || {}).codigo || '';
+
     const block = document.createElement('div');
     block.className = 'course-block';
     block.style.borderLeftColor = color;
- 
+
     const header = document.createElement('div');
     header.className = 'course-header';
     header.innerHTML = `
       <div class="course-dot" style="background:${color}"></div>
       <div class="course-name" title="${curso}">${codigo ? `<span class="curso-codigo">${codigo}</span> ` : ''}${curso}</div>
       <div class="course-chevron">▶</div>`;
- 
+
     const profsDiv = document.createElement('div');
     profsDiv.className = 'course-profs';
- 
+
     secciones.forEach(sec => {
       const docente = secMap[sec].docente;
-      const label   = document.createElement('label');
+      const label = document.createElement('label');
       label.className = 'prof-option';
       const cb = document.createElement('input');
-      cb.type            = 'checkbox';
-      cb.className       = 'p-check';
-      cb.dataset.curso   = curso;
+      cb.type = 'checkbox';
+      cb.className = 'p-check';
+      cb.dataset.curso = curso;
       cb.dataset.seccion = sec;
-      cb.value           = sec;
-      cb.checked         = true;
+      cb.value = sec;
+      cb.checked = true;
       const span = document.createElement('span');
       span.innerHTML = `<strong>Sección ${sec}</strong> — ${docente}`;
       label.appendChild(cb);
       label.appendChild(span);
       profsDiv.appendChild(label);
     });
- 
+
     header.addEventListener('click', () => {
       const open = profsDiv.classList.toggle('open');
       header.querySelector('.course-chevron').classList.toggle('open', open);
     });
- 
+
     block.appendChild(header);
     block.appendChild(profsDiv);
     container.appendChild(block);
   });
 }
- 
+
 // ── CRUCES ────────────────────────────────────────────────────
 function setCruces(v) {
   v = Math.min(6, Math.max(0, isNaN(v) ? 0 : Math.round(v)));
@@ -120,7 +120,7 @@ function setCruces(v) {
   const input = document.getElementById('crucesInput');
   if (input) input.value = v;
 }
- 
+
 // ── GENERAR ───────────────────────────────────────────────────
 function generar() {
   const seleccion = {};
@@ -128,22 +128,22 @@ function generar() {
     if (!seleccion[cb.dataset.curso]) seleccion[cb.dataset.curso] = [];
     if (cb.checked) seleccion[cb.dataset.curso].push(cb.dataset.seccion);
   });
- 
+
   if (!Object.keys(seleccion).length) {
     showToast('Selecciona al menos una sección', 'error');
     return;
   }
- 
+
   const titleEl = document.getElementById('topbarTitle');
   if (titleEl) titleEl.innerHTML = '<span class="spinner"></span> Generando combinaciones...';
- 
+
   setTimeout(() => {
     try {
       const opciones = prepararOpciones(seleccion, cargaGlobal);
-      combosValidos  = generarCombos(opciones, maxCruces);
- 
+      combosValidos = generarCombos(opciones, maxCruces);
+
       if (!combosValidos.length) {
-        const titleEl   = document.getElementById('topbarTitle');
+        const titleEl = document.getElementById('topbarTitle');
         const calWrapEl = document.getElementById('calendarWrap');
         if (titleEl) titleEl.innerHTML =
           '<span style="color:#ef4444">0 combinaciones</span> — sube los cruces o selecciona más secciones';
@@ -156,17 +156,17 @@ function generar() {
         _setBotonesVisibles(false);
         return;
       }
- 
+
       currentIndex = 0;
       _setBotonesVisibles(true);
       dibujar(0);
- 
+
       // En móvil, scroll suave hasta el calendario
       if (window.innerWidth < 900) {
         const calWrap = document.getElementById('calendarWrap');
         if (calWrap) calWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
- 
+
     } catch (e) {
       const errEl = document.getElementById('topbarTitle');
       if (errEl) errEl.innerHTML =
@@ -174,12 +174,12 @@ function generar() {
     }
   }, 50);
 }
- 
+
 // ── BOTONES VISIBLES ─────────────────────────────────────────
 function _setBotonesVisibles(visible) {
-  const display       = visible ? 'flex'       : 'none';
+  const display = visible ? 'flex' : 'none';
   const displayInline = visible ? 'inline-flex' : 'none';
- 
+
   const navC = document.getElementById('navControls');
   const favB = document.getElementById('btnFav');
   const expI = document.getElementById('btnExportImg');
@@ -189,21 +189,21 @@ function _setBotonesVisibles(visible) {
   if (expI) expI.style.display = displayInline;
   if (expX) expX.style.display = displayInline;
 }
- 
+
 // ── DIBUJAR CALENDARIO ────────────────────────────────────────
 function dibujar(idx) {
-  const combo         = combosValidos[idx];
-  const counterEl     = document.getElementById('counter');
+  const combo = combosValidos[idx];
+  const counterEl = document.getElementById('counter');
   const topbarTitleEl = document.getElementById('topbarTitle');
-  const calWrap       = document.getElementById('calendarWrap');
- 
-  if (counterEl)     counterEl.textContent = `${idx + 1} / ${combosValidos.length}`;
+  const calWrap = document.getElementById('calendarWrap');
+
+  if (counterEl) counterEl.textContent = `${idx + 1} / ${combosValidos.length}`;
   if (topbarTitleEl) topbarTitleEl.innerHTML =
     `Opción <span>${idx + 1}</span> de <span>${combosValidos.length}</span> combinaciones`;
- 
+
   const HOURS = [];
   for (let h = HOUR_START; h <= HOUR_END; h++) HOURS.push(h);
- 
+
   let html = `<table class="sched-table">
     <thead><tr>
       <th class="hour-th"></th>
@@ -217,7 +217,7 @@ function dibujar(idx) {
   });
   html += `</tbody></table>`;
   if (calWrap) calWrap.innerHTML = html;
- 
+
   // ── Construir bloques por día ─────────────────────────────
   const dayBlocks = {};
   combo.forEach((sec, ci) => {
@@ -231,7 +231,7 @@ function dibujar(idx) {
       dayBlocks[dIdx].push({ sec, cl, color });
     });
   });
- 
+
   // ── Detectar columnas con cruces (solo en móvil) ──────────
   const colsConCruces = new Set();
   if (window.innerWidth < 900) {
@@ -250,7 +250,7 @@ function dibujar(idx) {
         }
       }
     });
- 
+
     // Aplicar ancho doble a columnas con cruces
     if (colsConCruces.size > 0) {
       const table = calWrap.querySelector('.sched-table');
@@ -266,11 +266,11 @@ function dibujar(idx) {
       }
     }
   }
- 
+
   // ── Posicionar bloques ────────────────────────────────────
   Object.entries(dayBlocks).forEach(([dIdx, blocks]) => {
     blocks.sort((a, b) => a.cl.ini - b.cl.ini);
- 
+
     const slots = [];
     blocks.forEach(b => {
       let assigned = -1;
@@ -280,7 +280,7 @@ function dibujar(idx) {
       if (assigned === -1) { assigned = slots.length; slots.push(b.cl.fin); }
       b.slot = assigned;
     });
- 
+
     blocks.forEach(b => {
       let maxSlot = 0;
       blocks.forEach(other => {
@@ -290,27 +290,27 @@ function dibujar(idx) {
       });
       b.totalSlots = maxSlot + 1;
     });
- 
+
     blocks.forEach(({ sec, cl, color, slot, totalSlots }) => {
       const startH = Math.floor(cl.ini / 100);
       const startM = cl.ini % 100;
-      const endH   = Math.floor(cl.fin / 100);
-      const endM   = cl.fin % 100;
- 
+      const endH = Math.floor(cl.fin / 100);
+      const endM = cl.fin % 100;
+
       const anchor = document.getElementById(`c-${startH}-${dIdx}`);
       if (!anchor) return;
- 
+
       const durationMin = (endH * 60 + endM) - (startH * 60 + startM);
-      const topPx       = (startM / 60) * ROW_H;
-      const heightPx    = Math.max((durationMin / 60) * ROW_H - 2, 18);
-      const pct         = 100 / totalSlots;
-      const leftPct     = slot * pct;
-      const gap         = 2;
- 
-      const esTeoria  = cl.tipo === 'T' || /TEOR/i.test(cl.tipo);
+      const topPx = (startM / 60) * ROW_H;
+      const heightPx = Math.max((durationMin / 60) * ROW_H - 2, 18);
+      const pct = 100 / totalSlots;
+      const leftPct = slot * pct;
+      const gap = 2;
+
+      const esTeoria = cl.tipo === 'T' || /TEOR/i.test(cl.tipo);
       const tipoLabel = esTeoria ? 'T' : 'P';
       const tipoClass = esTeoria ? 'teoria-badge' : 'practica-badge';
- 
+
       const block = document.createElement('div');
       block.className = 'class-block';
       block.style.cssText = `
@@ -326,7 +326,7 @@ function dibujar(idx) {
           <div class="cb-meta">${cl.aula || 'Sec. ' + sec.seccion}</div>
           <div class="cb-badge ${tipoClass}">${tipoLabel}</div>
         </div>`;
- 
+
       block.addEventListener('mouseenter', e => showTip(e, sec, cl, color));
       block.addEventListener('mousemove', moveTooltip);
       block.addEventListener('mouseleave', hideTip);
@@ -334,17 +334,17 @@ function dibujar(idx) {
     });
   });
 }
- 
+
 // ── NAVEGAR ───────────────────────────────────────────────────
 function cambiar(n) {
   currentIndex = (currentIndex + n + combosValidos.length) % combosValidos.length;
   dibujar(currentIndex);
 }
- 
+
 // ── TOOLTIP ───────────────────────────────────────────────────
 function showTip(e, sec, cl, color) {
   if (!tooltipEl) return;
-  const fmt  = n => `${Math.floor(n / 100)}:${String(n % 100).padStart(2, '0')}`;
+  const fmt = n => `${Math.floor(n / 100)}:${String(n % 100).padStart(2, '0')}`;
   const tipo = cl.tipo === 'T' ? 'Teoría' : cl.tipo === 'P' ? 'Práctica' : cl.tipo;
   tooltipEl.innerHTML = `
     <strong style="color:${color}">${sec.nombre}</strong>
@@ -356,52 +356,52 @@ function showTip(e, sec, cl, color) {
   tooltipEl.style.display = 'block';
   moveTooltip(e);
 }
- 
+
 function moveTooltip(e) {
   if (!tooltipEl) return;
   tooltipEl.style.left = (e.clientX + 14) + 'px';
-  tooltipEl.style.top  = (e.clientY - 8)  + 'px';
+  tooltipEl.style.top = (e.clientY - 8) + 'px';
 }
- 
+
 function hideTip() {
   if (tooltipEl) tooltipEl.style.display = 'none';
 }
- 
+
 // ── FAVORITOS ─────────────────────────────────────────────────
 function guardarFavorito() {
   if (!combosValidos.length) return;
-  const combo  = combosValidos[currentIndex];
+  const combo = combosValidos[currentIndex];
   const nombre = prompt('Nombre para este horario:', `Opción ${currentIndex + 1}`);
   if (!nombre) return;
   Favoritos.agregar(combo, nombre);
   showToast('Horario guardado en favoritos ★', 'success');
 }
- 
+
 function toggleFavoritos() {
-  const panel   = document.getElementById('favsPanel');
+  const panel = document.getElementById('favsPanel');
   const overlay = document.getElementById('favsOverlay');
   if (!panel || !overlay) return;
   const visible = panel.style.display !== 'none';
   if (visible) {
-    panel.style.display   = 'none';
+    panel.style.display = 'none';
     overlay.style.display = 'none';
   } else {
-    panel.style.display   = 'flex';
+    panel.style.display = 'flex';
     overlay.style.display = 'block';
     renderFavoritos();
   }
 }
- 
+
 function renderFavoritos() {
-  const favs  = Favoritos.obtener();
+  const favs = Favoritos.obtener();
   const lista = document.getElementById('favsList');
   if (!lista) return;
- 
+
   if (!favs.length) {
     lista.innerHTML = '<div class="favs-empty">No tienes horarios guardados aún.</div>';
     return;
   }
- 
+
   lista.innerHTML = favs.map((fav, i) => {
     const cursos = [...new Set(fav.combo.map(s => s.nombre))].join(', ');
     return `<div class="fav-item">
@@ -416,12 +416,12 @@ function renderFavoritos() {
     </div>`;
   }).join('');
 }
- 
+
 function verFavorito(idx) {
   const favs = Favoritos.obtener();
   if (!favs[idx]) return;
   combosValidos = [favs[idx].combo];
-  currentIndex  = 0;
+  currentIndex = 0;
   toggleFavoritos();
   _setBotonesVisibles(true);
   dibujar(0);
@@ -430,13 +430,13 @@ function verFavorito(idx) {
     if (calWrap) calWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
- 
+
 function eliminarFavorito(idx) {
   Favoritos.eliminar(idx);
   renderFavoritos();
   showToast('Favorito eliminado', 'error');
 }
- 
+
 // ── EXPORTAR IMAGEN ───────────────────────────────────────────
 async function exportarImagen() {
   const tabla = document.querySelector('.sched-table');
@@ -448,19 +448,19 @@ async function exportarImagen() {
       scale: 2,
       useCORS: true,
       scrollX: 0, scrollY: 0,
-      width:  tabla.scrollWidth,
+      width: tabla.scrollWidth,
       height: tabla.scrollHeight
     });
-    const link    = document.createElement('a');
+    const link = document.createElement('a');
     link.download = `horario_opcion_${currentIndex + 1}.png`;
-    link.href     = canvas.toDataURL('image/png');
+    link.href = canvas.toDataURL('image/png');
     link.click();
     showToast('Imagen descargada ✓', 'success');
   } catch (e) {
     showToast('Error al exportar', 'error');
   }
 }
- 
+
 // ── EXPORTAR EXCEL ────────────────────────────────────────────
 function exportarExcel() {
   if (!combosValidos.length) {
@@ -468,25 +468,24 @@ function exportarExcel() {
     return;
   }
 
-  const combo          = combosValidos[currentIndex];
-  const DIAS_XLS        = ['LUNES','MARTES','MIERCOLES','JUEVES','VIERNES','SABADO'];
-  const DIAS_LABEL_XLS  = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const combo = combosValidos[currentIndex];
+  const DIAS_XLS = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+  const DIAS_LABEL_XLS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   const fmt = n => `${Math.floor(n / 100)}:${String(n % 100).padStart(2, '0')}`;
 
   // Paleta usada en el Excel (mismo celeste de acento que el resto de la app)
-  const ACCENT         = '06B6D4';
-  const AZUL_TEORIA     = '2563EB';
-  const ROJO_PRACTICA   = 'DC2626';
-  const bordeFino       = { style: 'thin', color: { rgb: ACCENT } };
-  const bordeCelda      = { top: bordeFino, bottom: bordeFino, left: bordeFino, right: bordeFino };
+  const ACCENT = '06B6D4';
+  const AZUL_TEORIA = '2563EB';
+  const ROJO_PRACTICA = 'DC2626';
+  const bordeFino = { style: 'thin', color: { rgb: ACCENT } };
+  const bordeCelda = { top: bordeFino, bottom: bordeFino, left: bordeFino, right: bordeFino };
 
   // NOTA TÉCNICA: se intentó colorear solo la letra T/P dentro de la misma
   // celda usando "rich text" (varios colores en un mismo texto), pero se
   // comprobó (generando y revisando el archivo real) que la librería no
   // conserva ese formato al escribir. Tampoco se usa emoji de color, para
-  // que se vea prolijo. En su lugar, se deja la letra T/P en texto plano
-  // y se agrega una nota real de Excel (comentario) en la celda "Hora"
-  // explicando qué significa cada una — se puede ver haciendo clic ahí.
+  // que se vea prolijo. En su lugar, T/P queda en texto plano entre
+  // paréntesis junto a la sección.
 
   // ═══════════════════════ HOJA "CALENDARIO" ═══════════════════
   const horasUnicas = new Set();
@@ -506,7 +505,7 @@ function exportarExcel() {
       combo.forEach(sec => sec.clases.forEach(cl => {
         if (cl.dia !== dia) return;
         const startH = Math.floor(cl.ini / 100);
-        const endH   = Math.floor(cl.fin / 100);
+        const endH = Math.floor(cl.fin / 100);
         if (h >= startH && h < endH) bloques.push({ sec, cl });
       }));
 
@@ -514,7 +513,7 @@ function exportarExcel() {
         fila.push(bloques.map(b => {
           const esTeoria = b.cl.tipo === 'T' || /TEOR/i.test(b.cl.tipo);
           const tipoLetra = esTeoria ? 'T' : 'P';
-          return `${b.sec.nombre}\nSección ${b.sec.seccion} · ${tipoLetra}`;
+          return `${b.sec.nombre}\nSección ${b.sec.seccion} (${tipoLetra})`;
         }).join('\n\n'));
       } else {
         fila.push('');
@@ -548,12 +547,6 @@ function exportarExcel() {
       };
     }
   }
-
-  // Nota/comentario real de Excel (aparece al hacer clic en la celda "Hora")
-  wsCalendario['A1'].c = [{
-    a: 'Generador de Horarios',
-    t: 'Leyenda:\nT = Teoría\nP = Práctica\n\n(En la hoja "Detalle", la columna Tipo sí aparece coloreada: azul para Teoría y rojo para Práctica).'
-  }];
 
   // Ancho automático por columna: se usa la línea más larga de esa columna
   // (no la palabra ni el bloque completo) para que el nombre del curso y la
@@ -657,7 +650,7 @@ function exportarExcel() {
     }
   }
 
-  const anchoCurso   = Math.min(Math.max(20, ...detalleData.map(f => (f[1] || '').length + 2)), 60);
+  const anchoCurso = Math.min(Math.max(20, ...detalleData.map(f => (f[1] || '').length + 2)), 60);
   const anchoDocente = Math.min(Math.max(18, ...detalleData.map(f => (f[3] || '').length + 2)), 40);
 
   wsDetalle['!cols'] = [
@@ -681,12 +674,12 @@ function exportarExcel() {
   XLSX.writeFile(wb, `horario_opcion_${currentIndex + 1}.xlsx`);
   showToast('Excel descargado ✓', 'success');
 }
- 
+
 // ── TOAST ─────────────────────────────────────────────────────
 function showToast(msg, type = 'info') {
   const t = document.getElementById('toast');
   if (!t) return;
   t.textContent = msg;
-  t.className   = `toast show ${type}`;
+  t.className = `toast show ${type}`;
   setTimeout(() => { t.className = 'toast'; }, 3000);
 }

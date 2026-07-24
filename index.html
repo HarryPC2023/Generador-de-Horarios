@@ -200,6 +200,7 @@
                 const div = document.createElement('div');
                 div.className = 'curso-item';
                 div.dataset.nombre = nombre;
+                div.dataset.codigo = codigo;
                 div.innerHTML = `
         <span class="curso-nombre">${codigo ? `<span class="curso-codigo">${codigo}</span> ` : ''}${nombre}</span>
         <span class="curso-check">✔</span>
@@ -213,28 +214,65 @@
             });
         }
 
-        // ── 4. Buscador: case-insensitive, sin tildes, coincidencia parcial ──
-        // (busca tanto en el nombre como en el código del curso, ya que
-        // ambos viven dentro de .curso-nombre)
+        // ── 4. Buscador: "empieza por" con prioridad, no "contiene en cualquier parte" ──
+        // Orden de resultados:
+        //   0) el nombre del curso empieza con lo escrito
+        //   1) alguna palabra intermedia del nombre empieza con lo escrito
+        //   2) el código del curso empieza con lo escrito
+        // y dentro de cada grupo, alfabético.
         function normalizarBusqueda(s) {
             return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         }
 
+        function prioridadBusqueda(item, q) {
+            const nombre = normalizarBusqueda(item.dataset.nombre || '');
+            const codigo = normalizarBusqueda(item.dataset.codigo || '');
+
+            if (nombre.startsWith(q)) return 0;
+            if (nombre.split(/\s+/).some(palabra => palabra.startsWith(q))) return 1;
+            if (codigo.startsWith(q)) return 2;
+            return -1;
+        }
+
+        function restaurarOrdenAlfabetico() {
+            const items = [...document.querySelectorAll('.curso-item')];
+            items.sort((a, b) => a.dataset.nombre.localeCompare(b.dataset.nombre, 'es'));
+            items.forEach(item => {
+                item.style.display = 'flex';
+                cursosLista.appendChild(item);
+            });
+        }
+
         courseSearch.addEventListener('input', e => {
-            const q = normalizarBusqueda(e.target.value);
+            const q = normalizarBusqueda(e.target.value.trim());
             clearSearch.style.display = q.length > 0 ? 'block' : 'none';
-            document.querySelectorAll('.curso-item').forEach(item => {
-                const texto = normalizarBusqueda(item.querySelector('.curso-nombre').innerText);
-                item.style.display = texto.includes(q) ? 'flex' : 'none';
+
+            if (!q) {
+                restaurarOrdenAlfabetico();
+                return;
+            }
+
+            const items = [...document.querySelectorAll('.curso-item')];
+            const conPrioridad = items
+                .map(item => ({ item, prioridad: prioridadBusqueda(item, q) }))
+                .filter(x => x.prioridad !== -1);
+
+            conPrioridad.sort((a, b) => {
+                if (a.prioridad !== b.prioridad) return a.prioridad - b.prioridad;
+                return a.item.dataset.nombre.localeCompare(b.item.dataset.nombre, 'es');
+            });
+
+            items.forEach(item => { item.style.display = 'none'; });
+            conPrioridad.forEach(({ item }) => {
+                item.style.display = 'flex';
+                cursosLista.appendChild(item);
             });
         });
 
         clearSearch.onclick = () => {
             courseSearch.value = '';
             clearSearch.style.display = 'none';
-            document.querySelectorAll('.curso-item').forEach(item => {
-                item.style.display = 'flex';
-            });
+            restaurarOrdenAlfabetico();
             courseSearch.focus();
         };
 

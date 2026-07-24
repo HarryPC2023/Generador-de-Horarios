@@ -5,7 +5,7 @@
   <link rel="manifest" href="manifest.json">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generador de Horarios - Generador</title>
+  <title>Generador de Horarios — Generador</title>
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
     rel="stylesheet">
@@ -146,6 +146,13 @@
               }
             });
           });
+
+          setInterval(() => reg.update().catch(() => { }), 60 * 1000);
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+              reg.update().catch(() => { });
+            }
+          });
         })
         .catch(err => console.warn('SW error:', err));
 
@@ -161,7 +168,7 @@
       if (document.querySelector('.update-banner')) return;
       const banner = document.createElement('div');
       banner.className = 'update-banner';
-      banner.innerHTML = `🔄 Hay una nueva versión disponible <button type="button">Actualizar</button>`;
+      banner.innerHTML = `🔄 ¡Hay una actualización disponible! <button type="button">Actualizar ahora</button>`;
       document.body.appendChild(banner);
       banner.querySelector('button').onclick = () => {
         sw.postMessage('SKIP_WAITING');

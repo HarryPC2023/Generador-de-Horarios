@@ -375,6 +375,13 @@ body {
   margin-bottom: 14px;
 }
 
+.sel-chips-empty {
+  font-size: 12px;
+  color: var(--text-faint);
+  font-style: italic;
+  padding: 4px 2px 10px 2px;
+}
+
 .chip {
   display: flex;
   align-items: center;

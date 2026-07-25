@@ -5,7 +5,7 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Horarios — Inicio</title>
+    <title>Generador de Horarios - Inicio</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
         rel="stylesheet">
@@ -433,7 +433,7 @@
         let swRegistro = null;
 
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
+            navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
                 .then(reg => {
                     console.log('SW registrado');
                     swRegistro = reg;
@@ -451,6 +451,8 @@
                     // Revisa activamente si hay versión nueva: al volver a la pestaña
                     // y cada 60s mientras la app está abierta. Así el aviso aparece
                     // sin depender de que el navegador decida chequear por su cuenta.
+                    // Revisión inmediata al cargar, además de las periódicas de abajo
+                    reg.update().catch(() => { });
                     setInterval(() => reg.update().catch(() => { }), 60 * 1000);
                     document.addEventListener('visibilitychange', () => {
                         if (document.visibilityState === 'visible') {

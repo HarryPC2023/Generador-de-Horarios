@@ -5,7 +5,7 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Horarios - Inicio</title>
+    <title>Generador de Horarios — Inicio</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
         rel="stylesheet">
@@ -200,6 +200,7 @@
                 const div = document.createElement('div');
                 div.className = 'curso-item';
                 div.dataset.nombre = nombre;
+                div.dataset.codigo = codigo;
                 div.innerHTML = `
         <span class="curso-nombre">${codigo ? `<span class="curso-codigo">${codigo}</span> ` : ''}${nombre}</span>
         <span class="curso-check">✔</span>
@@ -213,28 +214,65 @@
             });
         }
 
-        // ── 4. Buscador: case-insensitive, sin tildes, coincidencia parcial ──
-        // (busca tanto en el nombre como en el código del curso, ya que
-        // ambos viven dentro de .curso-nombre)
+        // ── 4. Buscador: "empieza por" con prioridad, no "contiene en cualquier parte" ──
+        // Orden de resultados:
+        //   0) el nombre del curso empieza con lo escrito
+        //   1) alguna palabra intermedia del nombre empieza con lo escrito
+        //   2) el código del curso empieza con lo escrito
+        // y dentro de cada grupo, alfabético.
         function normalizarBusqueda(s) {
             return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         }
 
+        function prioridadBusqueda(item, q) {
+            const nombre = normalizarBusqueda(item.dataset.nombre || '');
+            const codigo = normalizarBusqueda(item.dataset.codigo || '');
+
+            if (nombre.startsWith(q)) return 0;
+            if (nombre.split(/\s+/).some(palabra => palabra.startsWith(q))) return 1;
+            if (codigo.startsWith(q)) return 2;
+            return -1;
+        }
+
+        function restaurarOrdenAlfabetico() {
+            const items = [...document.querySelectorAll('.curso-item')];
+            items.sort((a, b) => a.dataset.nombre.localeCompare(b.dataset.nombre, 'es'));
+            items.forEach(item => {
+                item.style.display = 'flex';
+                cursosLista.appendChild(item);
+            });
+        }
+
         courseSearch.addEventListener('input', e => {
-            const q = normalizarBusqueda(e.target.value);
+            const q = normalizarBusqueda(e.target.value.trim());
             clearSearch.style.display = q.length > 0 ? 'block' : 'none';
-            document.querySelectorAll('.curso-item').forEach(item => {
-                const texto = normalizarBusqueda(item.querySelector('.curso-nombre').innerText);
-                item.style.display = texto.includes(q) ? 'flex' : 'none';
+
+            if (!q) {
+                restaurarOrdenAlfabetico();
+                return;
+            }
+
+            const items = [...document.querySelectorAll('.curso-item')];
+            const conPrioridad = items
+                .map(item => ({ item, prioridad: prioridadBusqueda(item, q) }))
+                .filter(x => x.prioridad !== -1);
+
+            conPrioridad.sort((a, b) => {
+                if (a.prioridad !== b.prioridad) return a.prioridad - b.prioridad;
+                return a.item.dataset.nombre.localeCompare(b.item.dataset.nombre, 'es');
+            });
+
+            items.forEach(item => { item.style.display = 'none'; });
+            conPrioridad.forEach(({ item }) => {
+                item.style.display = 'flex';
+                cursosLista.appendChild(item);
             });
         });
 
         clearSearch.onclick = () => {
             courseSearch.value = '';
             clearSearch.style.display = 'none';
-            document.querySelectorAll('.curso-item').forEach(item => {
-                item.style.display = 'flex';
-            });
+            restaurarOrdenAlfabetico();
             courseSearch.focus();
         };
 
@@ -264,6 +302,13 @@
         function renderChips() {
             const chipsWrap = document.getElementById('selChips');
             chipsWrap.innerHTML = '';
+
+            if (!cursosSeleccionados.size) {
+                chipsWrap.innerHTML = '<div class="sel-chips-empty">Aquí verás los cursos que vayas eligiendo</div>';
+                btnClearSel.style.display = 'none';
+                return;
+            }
+
             [...cursosSeleccionados].forEach(nombre => {
                 const chip = document.createElement('div');
                 chip.className = 'chip';
@@ -280,7 +325,7 @@
                 };
                 chipsWrap.appendChild(chip);
             });
-            btnClearSel.style.display = cursosSeleccionados.size ? 'block' : 'none';
+            btnClearSel.style.display = 'block';
         }
 
         // Botón "Limpiar selección": desmarca todos los cursos de golpe
@@ -385,10 +430,13 @@
 
     <!-- ── Registro PWA + aviso de actualización ── -->
     <script>
+        let swRegistro = null;
+
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
                 .then(reg => {
                     console.log('SW registrado');
+                    swRegistro = reg;
                     if (reg.waiting) mostrarAvisoActualizacion(reg.waiting);
                     reg.addEventListener('updatefound', () => {
                         const nuevoSW = reg.installing;
@@ -398,6 +446,16 @@
                                 mostrarAvisoActualizacion(nuevoSW);
                             }
                         });
+                    });
+
+                    // Revisa activamente si hay versión nueva: al volver a la pestaña
+                    // y cada 60s mientras la app está abierta. Así el aviso aparece
+                    // sin depender de que el navegador decida chequear por su cuenta.
+                    setInterval(() => reg.update().catch(() => { }), 60 * 1000);
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') {
+                            reg.update().catch(() => { });
+                        }
                     });
                 })
                 .catch(err => console.warn('SW error:', err));
@@ -414,7 +472,7 @@
             if (document.querySelector('.update-banner')) return;
             const banner = document.createElement('div');
             banner.className = 'update-banner';
-            banner.innerHTML = `🔄 Hay una nueva versión disponible <button type="button">Actualizar</button>`;
+            banner.innerHTML = `🔄 ¡Hay una actualización disponible! <button type="button">Actualizar ahora</button>`;
             document.body.appendChild(banner);
             banner.querySelector('button').onclick = () => {
                 sw.postMessage('SKIP_WAITING');

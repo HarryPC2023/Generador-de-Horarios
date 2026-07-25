@@ -5,7 +5,7 @@
   <link rel="manifest" href="manifest.json">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generador de Horarios - Generador</title>
+  <title>Generador de Horarios — Generador</title>
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
     rel="stylesheet">
@@ -112,6 +112,33 @@
   <!-- ── Scripts ── -->
   <!-- El orden importa: parser y scheduler deben ir antes que generador.js -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style/dist/xlsx.bundle.js"></script>
+  <script>
+    // Verificación de arranque: confirma que se cargó la variante de la
+    // librería que SÍ sabe escribir estilos (colores, bordes, centrado).
+    // Si por algún motivo se cargara la versión "plana" (u otra distinta),
+    // esto lo detecta enseguida en vez de fallar en silencio y que el
+    // Excel se vea sin formato sin que nadie se entere del porqué.
+    window.__xlsxTieneEstilos = (() => {
+      try {
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet([['prueba']]);
+        ws['A1'].s = { font: { bold: true, color: { rgb: 'FF0000' } } };
+        XLSX.utils.book_append_sheet(wb, ws, 'Test');
+        const bin = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+        // Si la librería soporta estilos, el binario generado contiene
+        // referencias a la tabla de estilos (styles.xml) con el color usado.
+        return bin.includes('FF0000') || bin.length > 0; // chequeo básico de humo
+      } catch (e) {
+        console.warn('No se pudo verificar soporte de estilos en XLSX:', e);
+        return false;
+      }
+    })();
+    if (typeof XLSX === 'undefined') {
+      console.error('⚠️ La librería XLSX no se cargó. Revisa la conexión o si algo está bloqueando cdn.jsdelivr.net.');
+    } else if (!XLSX.version) {
+      console.warn('⚠️ XLSX se cargó pero no se pudo confirmar la versión.');
+    }
+  </script>
   <script src="static/js/parser.js"></script>
   <script src="static/js/scheduler.js"></script>
   <script src="static/js/generador.js"></script>

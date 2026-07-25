@@ -55,15 +55,14 @@
 
                 <div id="uploadStatus" class="upload-status"></div>
 
-                <!-- Guardar / Limpiar progreso: solo visible cuando hay algo cargado -->
-                <div id="persistActions" style="display:none; gap:8px; margin-top:10px;">
-                    <button id="btnGuardar" class="btn-action" style="flex:1;"
-                        title="Conservar archivo y selección para la próxima vez">
-                        💾 Guardar
-                    </button>
-                    <button id="btnLimpiarTodo" class="btn-action" style="flex:1; color:#ef4444;"
+                <!-- Progreso: se guarda solo en cada cambio, ya no depende de un clic -->
+                <div id="persistActions" style="display:none; flex-direction:column; gap:6px; margin-top:10px;">
+                    <div class="autosave-hint" style="font-size:11px; opacity:.6; text-align:center;">
+                        💾 Tu progreso se guarda automáticamente
+                    </div>
+                    <button id="btnLimpiarTodo" class="btn-action" style="width:100%; color:#ef4444;"
                         title="Borrar archivo y selección guardados">
-                        🗑 Limpiar
+                        🗑 Limpiar todo
                     </button>
                 </div>
             </div>
@@ -136,6 +135,33 @@
         const LS_CARGA = 'horarioGen_carga';
         const LS_NOMBRE = 'horarioGen_archivo';
         const LS_SEL = 'horarioGen_seleccion';
+        // Estas dos las usa generador.js (pantalla 2), pero se limpian desde
+        // acá cuando cambia el archivo o el usuario pulsa "Limpiar todo"
+        const LS_GEN_SECCIONES = 'horarioGen_seccionesGen';
+        const LS_GEN_CRUCES = 'horarioGen_cruces';
+
+        // ── Autoguardado: se llama en cada cambio, no en un clic ──
+        // Reemplaza al antiguo botón "Guardar" manual.
+        function guardarProgreso() {
+            if (!cargaGlobal) return;
+            try {
+                localStorage.setItem(LS_CARGA, JSON.stringify(cargaGlobal));
+                localStorage.setItem(LS_NOMBRE, nombreArchivoActual);
+                localStorage.setItem(LS_SEL, JSON.stringify([...cursosSeleccionados]));
+                avisarAutoguardadoUnaVez();
+            } catch (e) {
+                // Ej: archivo muy grande para el límite de localStorage del navegador
+                showToast('No se pudo guardar automáticamente (archivo muy grande para el navegador)', 'error');
+            }
+        }
+
+        // Avisa una sola vez por sesión de pestaña que el guardado es automático,
+        // para no mostrar un toast en cada clic/selección.
+        function avisarAutoguardadoUnaVez() {
+            if (sessionStorage.getItem('horarioGen_avisoAutoguardado')) return;
+            sessionStorage.setItem('horarioGen_avisoAutoguardado', '1');
+            showToast('Tu progreso se guarda automáticamente ✓', 'success');
+        }
 
         // ── Código del curso a partir de la carga ───────────────
         function getCodigoCurso(nombre) {
@@ -170,6 +196,18 @@
 
             parsearExcel(file)
                 .then(carga => {
+                    // Si ya había un archivo distinto guardado, la selección de
+                    // secciones/profesores y cruces de la pantalla 2 (que pertenece
+                    // a ese archivo anterior) ya no tiene sentido: se limpia y se avisa.
+                    const nombreAnterior = localStorage.getItem(LS_NOMBRE);
+                    const habiaSeleccionGenerador =
+                        !!localStorage.getItem(LS_GEN_SECCIONES) || !!localStorage.getItem(LS_GEN_CRUCES);
+                    if (nombreAnterior && nombreAnterior !== file.name && habiaSeleccionGenerador) {
+                        localStorage.removeItem(LS_GEN_SECCIONES);
+                        localStorage.removeItem(LS_GEN_CRUCES);
+                        showToast('Archivo nuevo detectado: tu selección de secciones y cruces anterior quedó desactualizada', 'info');
+                    }
+
                     cargaGlobal = carga;
                     nombreArchivoActual = file.name;
 
@@ -184,6 +222,7 @@
                     cardCursos.style.display = 'block';
                     persistActions.style.display = 'flex';
                     actualizarSeleccion();
+                    guardarProgreso();
                 })
                 .catch(err => {
                     uploadStatus.innerHTML =
@@ -290,6 +329,7 @@
             }
 
             actualizarSeleccion();
+            guardarProgreso();
         }
 
         // Sincroniza contador + chips + botón "Generar" cada vez que cambia la selección
@@ -336,6 +376,7 @@
             });
             cursosSeleccionados.clear();
             actualizarSeleccion();
+            guardarProgreso();
         };
 
         // ── 6. Ir al generador ──────────────────────────────────
@@ -346,26 +387,13 @@
             window.location.href = 'generador.html?' + params.toString();
         };
 
-        // ── 7. Guardar / Limpiar progreso (persiste al cerrar la app) ──
-        document.getElementById('btnGuardar').onclick = () => {
-            if (!cargaGlobal) {
-                showToast('Primero carga un archivo', 'error');
-                return;
-            }
-            try {
-                localStorage.setItem(LS_CARGA, JSON.stringify(cargaGlobal));
-                localStorage.setItem(LS_NOMBRE, nombreArchivoActual);
-                localStorage.setItem(LS_SEL, JSON.stringify([...cursosSeleccionados]));
-                showToast('Progreso guardado ✓ — lo verás al volver a abrir la app', 'success');
-            } catch (e) {
-                showToast('No se pudo guardar (archivo muy grande para el navegador)', 'error');
-            }
-        };
-
+        // ── 7. Limpiar progreso (el guardado ahora es automático, en cada cambio) ──
         document.getElementById('btnLimpiarTodo').onclick = () => {
             localStorage.removeItem(LS_CARGA);
             localStorage.removeItem(LS_NOMBRE);
             localStorage.removeItem(LS_SEL);
+            localStorage.removeItem(LS_GEN_SECCIONES);
+            localStorage.removeItem(LS_GEN_CRUCES);
             sessionStorage.removeItem('cargaHoraria');
 
             cargaGlobal = null;

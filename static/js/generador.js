@@ -18,6 +18,13 @@ let seccionesData = {};
 
 if (typeof cargaGlobal === 'undefined') var cargaGlobal = null;
 
+// ── AUTOGUARDADO (pantalla 2) ────────────────────────────────
+// Guarda qué secciones/profesores quedaron marcados y la cantidad
+// de cruces elegida, para que no se pierdan al volver a esta pantalla.
+// Mismo mecanismo (localStorage) que ya usa index.html para el Excel.
+const LS_GEN_SECCIONES = 'horarioGen_seccionesGen';
+const LS_GEN_CRUCES = 'horarioGen_cruces';
+
 // ── TOOLTIP ───────────────────────────────────────────────────
 let tooltipEl = null;
 document.addEventListener('DOMContentLoaded', () => {
@@ -25,9 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     tooltipEl = document.createElement('div');
     tooltipEl.className = 'tooltip';
     document.body.appendChild(tooltipEl);
-  }
-  if (document.getElementById('crucesInput')) {
-    setCruces(0);
   }
 });
 
@@ -57,6 +61,65 @@ function inicializar(cursos) {
   });
 
   renderSidebar(seccionesData);
+
+  // Restaura lo que el usuario había marcado/elegido la última vez.
+  // Si no hay nada guardado (o pertenece a un archivo distinto ya
+  // limpiado desde index.html), simplemente se queda en los valores
+  // por defecto (todas las secciones marcadas, 0 cruces).
+  restaurarSeleccionSecciones();
+  restaurarCruces();
+}
+
+// ── AUTOGUARDADO: secciones/profesores marcados ────────────────
+function guardarSeleccionSecciones() {
+  const seleccion = {};
+  document.querySelectorAll('.p-check').forEach(cb => {
+    if (!seleccion[cb.dataset.curso]) seleccion[cb.dataset.curso] = [];
+    if (cb.checked) seleccion[cb.dataset.curso].push(cb.dataset.seccion);
+  });
+  try {
+    localStorage.setItem(LS_GEN_SECCIONES, JSON.stringify(seleccion));
+  } catch (e) {
+    // Guardado silencioso: si falla (ej. modo incógnito sin storage),
+    // no interrumpe el uso normal del generador.
+    console.warn('No se pudo guardar la selección de secciones:', e);
+  }
+}
+
+function restaurarSeleccionSecciones() {
+  let seleccion = null;
+  try {
+    const guardado = localStorage.getItem(LS_GEN_SECCIONES);
+    if (guardado) seleccion = JSON.parse(guardado);
+  } catch (e) {
+    console.warn('No se pudo restaurar la selección de secciones:', e);
+  }
+  if (!seleccion) return;
+
+  document.querySelectorAll('.p-check').forEach(cb => {
+    const curso = cb.dataset.curso;
+    // Si el curso no estaba en lo guardado (ej. es un curso nuevo que
+    // no existía la vez anterior), se deja el valor por defecto (marcado).
+    if (curso in seleccion) {
+      cb.checked = seleccion[curso].includes(cb.dataset.seccion);
+    }
+  });
+}
+
+// ── AUTOGUARDADO: cantidad de cruces ────────────────────────────
+function guardarCruces(v) {
+  try {
+    localStorage.setItem(LS_GEN_CRUCES, String(v));
+  } catch (e) {
+    console.warn('No se pudo guardar la cantidad de cruces:', e);
+  }
+}
+
+function restaurarCruces() {
+  const guardado = localStorage.getItem(LS_GEN_CRUCES);
+  if (guardado === null) return;
+  const v = parseInt(guardado, 10);
+  if (!isNaN(v)) setCruces(v);
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────
@@ -97,6 +160,7 @@ function renderSidebar(data) {
       cb.checked = true;
       const span = document.createElement('span');
       span.innerHTML = `<strong>Sección ${sec}</strong> — ${docente}`;
+      cb.addEventListener('change', guardarSeleccionSecciones);
       label.appendChild(cb);
       label.appendChild(span);
       profsDiv.appendChild(label);
@@ -119,6 +183,7 @@ function setCruces(v) {
   maxCruces = v;
   const input = document.getElementById('crucesInput');
   if (input) input.value = v;
+  guardarCruces(v);
 }
 
 // ── GENERAR ───────────────────────────────────────────────────
@@ -462,7 +527,7 @@ async function exportarImagen() {
 }
 
 // ── EXPORTAR EXCEL ────────────────────────────────────────────
-function exportarExcel() {
+async function exportarExcel() {
   if (!combosValidos.length) {
     showToast('Genera un horario primero', 'error');
     return;
@@ -666,13 +731,71 @@ function exportarExcel() {
   ];
   wsDetalle['!rows'] = [{ hpx: 22 }, ...detalleData.slice(1).map(() => ({ hpx: 24 }))];
 
+  // ═══════════════════ CONFIGURACIÓN DE IMPRESIÓN ═══════════════════
+  // xlsx-js-style escribe márgenes (!margins) pero no orientación ni
+  // ajuste de página (!pageSetup) — esa parte se inyecta más abajo,
+  // directamente en el XML interno del archivo (ver inyectarConfigImpresion).
+  const CM_A_IN = cm => cm / 2.54; // el XLSX guarda los márgenes en pulgadas
+  const margenesImpresion = {
+    left: CM_A_IN(0.5), right: CM_A_IN(0.5),
+    top: CM_A_IN(0.5), bottom: CM_A_IN(0.5),
+    header: 0, footer: 0
+  };
+  wsCalendario['!margins'] = margenesImpresion;
+  wsDetalle['!margins'] = margenesImpresion;
+
   // ═══════════════════════ LIBRO FINAL ═══════════════════════════
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, wsCalendario, 'Calendario');
   XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle');
 
-  XLSX.writeFile(wb, `horario_opcion_${currentIndex + 1}.xlsx`);
+  await descargarConConfigImpresion(wb, `horario_opcion_${currentIndex + 1}.xlsx`);
   showToast('Excel descargado ✓', 'success');
+}
+
+// Genera el archivo, le inyecta orientación horizontal + "ajustar a 1 página
+// de ancho x 1 de alto" (que la librería de estilos no soporta escribir) y
+// recién ahí lo descarga. Si algo falla (ej. no cargó JSZip), se descarga
+// igual pero sin esa configuración, en vez de romper la exportación entera.
+async function descargarConConfigImpresion(wb, nombreArchivo) {
+  try {
+    if (typeof JSZip === 'undefined') throw new Error('JSZip no disponible');
+
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const zip = await JSZip.loadAsync(wbout);
+    const hojasXml = Object.keys(zip.files).filter(f => /^xl\/worksheets\/sheet\d+\.xml$/.test(f));
+
+    for (const ruta of hojasXml) {
+      const contenido = await zip.file(ruta).async('string');
+      zip.file(ruta, inyectarConfigImpresion(contenido));
+    }
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = nombreArchivo;
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.warn('No se pudo aplicar la config. de impresión, se descarga sin ella:', e);
+    XLSX.writeFile(wb, nombreArchivo);
+  }
+}
+
+// Agrega <sheetPr fitToPage> y <pageSetup orientation="landscape" .../>
+// al XML de una hoja. Verificado con openpyxl que Excel lo lee correctamente
+// como "Horizontal" + "Ajustar a: 1 página de ancho por 1 de alto".
+function inyectarConfigImpresion(xml) {
+  xml = xml.replace(
+    /(<worksheet[^>]*>)/,
+    '$1<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>'
+  );
+  xml = xml.replace(
+    /(<pageMargins[^/]*\/>)/,
+    '$1<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="1" paperSize="9"/>'
+  );
+  return xml;
 }
 
 // ── TOAST ─────────────────────────────────────────────────────

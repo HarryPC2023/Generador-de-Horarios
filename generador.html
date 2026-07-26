@@ -11,6 +11,9 @@
     rel="stylesheet">
   <link rel="stylesheet" href="static/css/style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- JSZip: para inyectar orientación/ajuste de página en el .xlsx exportado,
+       ya que xlsx-js-style no soporta escribir esa configuración -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 
 <body>
@@ -56,6 +59,9 @@
       </div>
 
       <div class="sidebar-footer">
+        <div class="autosave-hint" style="font-size:11px; opacity:.6; text-align:center; margin-bottom:8px;">
+          💾 Tu selección se guarda automáticamente
+        </div>
         <button class="btn-gen" onclick="generar()">⚡ Generar Horarios</button>
       </div>
     </div>

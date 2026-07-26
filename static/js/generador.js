@@ -783,17 +783,19 @@ async function descargarConConfigImpresion(wb, nombreArchivo) {
   }
 }
 
-// Agrega <sheetPr fitToPage> y <pageSetup orientation="landscape" .../>
+// Agrega <sheetPr fitToPage>, <printOptions centrado> y <pageSetup orientation="landscape" .../>
 // al XML de una hoja. Verificado con openpyxl que Excel lo lee correctamente
-// como "Horizontal" + "Ajustar a: 1 página de ancho por 1 de alto".
+// como "Horizontal" + "Ajustar a: 1 página" + "Centrar en la página: Horizontal y Verticalmente".
 function inyectarConfigImpresion(xml) {
   xml = xml.replace(
     /(<worksheet[^>]*>)/,
     '$1<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>'
   );
+  // El orden importa (lo exige el schema de OOXML): printOptions va ANTES
+  // que pageMargins, y pageSetup va DESPUÉS de pageMargins.
   xml = xml.replace(
     /(<pageMargins[^/]*\/>)/,
-    '$1<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="1" paperSize="9"/>'
+    '<printOptions horizontalCentered="1" verticalCentered="1"/>$1<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="1" paperSize="9"/>'
   );
   return xml;
 }

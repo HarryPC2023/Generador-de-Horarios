@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de Horarios - Generador</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+
+  <div class="gen-layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <img src="static/img/512x512.png" alt="Logo" class="logo-icon-img">
+          <span class="sidebar-logo-text">Generador de Horarios</span>
+        </div>
+        <!-- Antes era href="/" (ruta Flask), ahora apunta al archivo directamente -->
+        <a href="index.html" class="back-btn">← Volver</a>
+      </div>
+
+      <div class="sidebar-scroll">
+        <div class="sb-section">
+          <div class="step-label">01 — Secciones por curso</div>
+          <div id="listaCursos">
+            <div class="sb-loading">Cargando secciones...</div>
+          </div>
+        </div>
+
+        <div class="sb-section">
+          <div class="step-label">02 — Cruces permitidos</div>
+          <div class="crossings-row">
+            <div class="crossings-label">
+              <strong>Cantidad de cruces</strong>
+              Solo aplica a teoría
+            </div>
+            <div class="crossings-spinner">
+              <input type="number" class="spinner-input" id="crucesInput" min="0" max="6" value="0"
+                oninput="setCruces(parseInt(this.value)||0)">
+              <div class="spinner-btns">
+                <button class="spinner-btn" onclick="setCruces(maxCruces-1)">−</button>
+                <button class="spinner-btn" onclick="setCruces(maxCruces+1)">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="btn-gen" onclick="generar()">⚡ Generar Horarios</button>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title" id="topbarTitle">Configura tus preferencias y genera</div>
+        <div class="topbar-actions">
+          <div class="nav-controls" id="navControls" style="display:none">
+            <button class="btn-nav" onclick="cambiar(-1)">◀</button>
+            <div class="counter-pill" id="counter">1 / 1</div>
+            <button class="btn-nav" onclick="cambiar(1)">▶</button>
+          </div>
+          <button class="btn-action" id="btnFav" onclick="guardarFavorito()" style="display:none"
+            title="Guardar como favorito">★ Guardar</button>
+          <button class="btn-action btn-export" id="btnExportImg" onclick="exportarImagen()" style="display:none"
+            title="Exportar como imagen">⬇ PNG</button>
+          <button class="btn-action btn-export" id="btnExportXls" onclick="exportarExcel()" style="display:none"
+            title="Exportar como Excel">⬇ Excel</button>
+          <button class="btn-action btn-favs" onclick="toggleFavoritos()" title="Ver favoritos">☆ Favoritos</button>
+        </div>
+      </div>
+
+      <div class="calendar-wrap" id="calendarWrap">
+        <div class="empty-state">
+          <div class="empty-icon">🗓</div>
+          <div class="empty-text">Tu horario aparecerá aquí</div>
+          <div class="empty-sub">Selecciona secciones y pulsa Generar</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Panel Favoritos -->
+  <div class="favs-panel" id="favsPanel" style="display:none">
+    <div class="favs-header">
+      <span>☆ Mis Favoritos</span>
+      <button onclick="toggleFavoritos()">×</button>
+    </div>
+    <div class="favs-list" id="favsList"></div>
+  </div>
+  <div class="favs-overlay" id="favsOverlay" onclick="toggleFavoritos()" style="display:none"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- ═══ FIRMA ═══ -->
+  <footer class="harry-footer">
+    <img src="static/img/harry.png" alt="Harry" class="harry-footer-img">
+    <span class="harry-footer-text">by Harry</span>
+  </footer>
+
+  <!-- ── Scripts ── -->
+  <!-- El orden importa: parser y scheduler deben ir antes que generador.js -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style/dist/xlsx.bundle.js"></script>
+  <script>
+    // Verificación de arranque: confirma que se cargó la variante de la
+    // librería que SÍ sabe escribir estilos (colores, bordes, centrado).
+    // Si por algún motivo se cargara la versión "plana" (u otra distinta),
+    // esto lo detecta enseguida en vez de fallar en silencio y que el
+    // Excel se vea sin formato sin que nadie se entere del porqué.
+    window.__xlsxTieneEstilos = (() => {
+      try {
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet([['prueba']]);
+        ws['A1'].s = { font: { bold: true, color: { rgb: 'FF0000' } } };
+        XLSX.utils.book_append_sheet(wb, ws, 'Test');
+        const bin = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+        // Si la librería soporta estilos, el binario generado contiene
+        // referencias a la tabla de estilos (styles.xml) con el color usado.
+        return bin.includes('FF0000') || bin.length > 0; // chequeo básico de humo
+      } catch (e) {
+        console.warn('No se pudo verificar soporte de estilos en XLSX:', e);
+        return false;
+      }
+    })();
+    if (typeof XLSX === 'undefined') {
+      console.error('⚠️ La librería XLSX no se cargó. Revisa la conexión o si algo está bloqueando cdn.jsdelivr.net.');
+    } else if (!XLSX.version) {
+      console.warn('⚠️ XLSX se cargó pero no se pudo confirmar la versión.');
+    }
+  </script>
+  <script src="static/js/parser.js"></script>
+  <script src="static/js/scheduler.js"></script>
+  <script src="static/js/generador.js"></script>
+  <script>
+    // Recupera los cursos seleccionados de la URL
+    // Funciona igual que antes: index.html los pasa por ?curso=...
+    const params = new URLSearchParams(window.location.search);
+    const cursosSeleccionados = params.getAll('curso');
+
+    // Recupera la carga horaria guardada por index.html en sessionStorage
+    // Equivale a carga_horaria en memoria del servidor Flask
+    const cargaGuardada = sessionStorage.getItem('cargaHoraria');
+    if (cargaGuardada) {
+      cargaGlobal = JSON.parse(cargaGuardada);
+    }
+
+    inicializar(cursosSeleccionados);
+  </script>
+  <!-- ── Registro PWA + aviso de actualización ── -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+        .then(reg => {
+          console.log('SW registrado');
+          if (reg.waiting) mostrarAvisoActualizacion(reg.waiting);
+          reg.addEventListener('updatefound', () => {
+            const nuevoSW = reg.installing;
+            if (!nuevoSW) return;
+            nuevoSW.addEventListener('statechange', () => {
+              if (nuevoSW.state === 'installed' && navigator.serviceWorker.controller) {
+                mostrarAvisoActualizacion(nuevoSW);
+              }
+            });
+          });
+
+          // Revisión inmediata al cargar, además de las periódicas de abajo
+          reg.update().catch(() => { });
+          setInterval(() => reg.update().catch(() => { }), 60 * 1000);
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+              reg.update().catch(() => { });
+            }
+          });
+        })
+        .catch(err => console.warn('SW error:', err));
+
+      let recargando = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (recargando) return;
+        recargando = true;
+        window.location.reload();
+      });
+    }
+
+    function mostrarAvisoActualizacion(sw) {
+      if (document.querySelector('.update-banner')) return;
+      const banner = document.createElement('div');
+      banner.className = 'update-banner';
+      banner.innerHTML = `🔄 ¡Hay una actualización disponible! <button type="button">Actualizar ahora</button>`;
+      document.body.appendChild(banner);
+      banner.querySelector('button').onclick = () => {
+        sw.postMessage('SKIP_WAITING');
+        banner.remove();
+      };
+    }
+  </script>
+</body>
+
+</html>

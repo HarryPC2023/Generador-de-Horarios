@@ -433,10 +433,47 @@ function hideTip() {
 }
 
 // ── FAVORITOS ─────────────────────────────────────────────────
-function guardarFavorito() {
+// ── MODAL "GUARDAR FAVORITO" ─────────────────────────────────
+function pedirNombreHorario(valorInicial = '') {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-card">
+        <div class="modal-icon">★</div>
+        <div class="modal-title">Guardar horario</div>
+        <div class="modal-desc">Ponle un nombre para encontrarlo después en tus favoritos</div>
+        <input type="text" class="modal-input" id="modalNombreInput" value="${valorInicial}">
+        <div class="modal-actions">
+          <button class="modal-btn-cancel" id="modalCancelar">Cancelar</button>
+          <button class="modal-btn-primary" id="modalAceptar">Guardar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const input = overlay.querySelector('#modalNombreInput');
+    requestAnimationFrame(() => { overlay.classList.add('show'); input.focus(); input.select(); });
+
+    function cerrar(valor) {
+      overlay.classList.remove('show');
+      setTimeout(() => overlay.remove(), 150);
+      resolve(valor);
+    }
+
+    overlay.querySelector('#modalAceptar').onclick = () => cerrar(input.value.trim() || null);
+    overlay.querySelector('#modalCancelar').onclick = () => cerrar(null);
+    overlay.addEventListener('click', e => { if (e.target === overlay) cerrar(null); });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') overlay.querySelector('#modalAceptar').click();
+      if (e.key === 'Escape') cerrar(null);
+    });
+  });
+}
+
+async function guardarFavorito() {
   if (!combosValidos.length) return;
   const combo = combosValidos[currentIndex];
-  const nombre = prompt('Nombre para este horario:', `Opción ${currentIndex + 1}`);
+  const nombre = await pedirNombreHorario(`Opción ${currentIndex + 1}`);
   if (!nombre) return;
   Favoritos.agregar(combo, nombre);
   showToast('Horario guardado en favoritos ★', 'success');

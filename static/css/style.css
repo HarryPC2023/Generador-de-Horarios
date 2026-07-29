@@ -1579,7 +1579,7 @@ body.page-index-body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(71, 71, 82, 0.55);
   backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
@@ -1595,9 +1595,9 @@ body.page-index-body {
 
 .modal-card {
   background:
-    linear-gradient(135deg, rgba(153, 0, 255, 0.4), rgba(88, 28, 135, 0.4)),
-    #0b0f1a;
-  border: 1px solid rgba(153, 0, 255, 0.4);
+    linear-gradient(135deg, rgba(153, 0, 255, 0.4), rgba(153, 0, 255, 0.4)),
+    #2b2b38;
+  border: 1px solid rgba(153, 0, 255, 0.5);
   border-radius: 16px;
   padding: 28px 26px;
   width: 320px;
@@ -1617,7 +1617,7 @@ body.page-index-body {
   height: 44px;
   margin: 0 auto 12px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #9900FF, #6b21a8);
+  background: linear-gradient(135deg, #9900FF, #7a00cc);
   color: #fff;
   display: flex;
   align-items: center;
@@ -1654,7 +1654,7 @@ body.page-index-body {
 
 .modal-input:focus {
   border-color: #9900FF;
-  box-shadow: 0 0 0 3px rgba(153, 0, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(153, 0, 255, 0.25);
 }
 
 .modal-actions {
@@ -1690,6 +1690,6 @@ body.page-index-body {
 }
 
 .modal-btn-primary {
-  background: linear-gradient(135deg, #9900FF, #6b21a8);
+  background: linear-gradient(135deg, #9900FF, #7a00cc);
   color: #fff;
 }

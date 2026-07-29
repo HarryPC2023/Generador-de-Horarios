@@ -1,0 +1,88 @@
+/* ============================================================
+   TEMA SIGA para Generador de Horarios
+   Cargar DESPUÉS de static/css/style.css — solo sobreescribe
+   variables y selectores puntuales, no toca la lógica del app.
+   ============================================================ */
+
+:root {
+  --accent: #6600CC;
+  --accent-dim: rgba(102, 0, 204, 0.1);
+  --accent-dark: #4f0099;
+  --bg: #FFFDF9;
+  --surface: #ffffff;
+  --surface2: #FFFDF9;
+  --border: rgba(0, 0, 0, 0.08);
+  --text: #000000;
+  --text-dim: #4A4A4A;
+  --text-faint: #9c9c9c;
+  --radius: 14px;
+}
+
+body {
+  font-family: 'Orbitron', sans-serif;
+}
+
+.logo-title,
+.card-title,
+.topbar-title,
+h1,
+h2,
+h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 600;
+}
+
+/* Header de la pantalla de inicio, con el degradado de SIGA */
+.idx-header {
+  background: linear-gradient(120deg, #EAF2FF 0%, #ffffff 55%, #F3EAFB 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.topbar {
+  background: linear-gradient(120deg, #EAF2FF 0%, #ffffff 55%, #F3EAFB 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Tarjetas con el mismo lenguaje visual que el dashboard SIGA */
+.idx-card {
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Botones en pastilla, como en el resto de SIGA */
+.btn-primary,
+.btn-gen {
+  border-radius: 999px !important;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary:hover,
+.btn-gen:hover {
+  box-shadow: 0 8px 18px rgba(102, 0, 204, 0.28);
+  transform: translateY(-2px);
+}
+
+/* Barra superior de vuelta a SIGA — ver instrucciones para el href */
+.siga-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: #fff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.siga-topbar a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.siga-topbar a:hover {
+  text-decoration: underline;
+}

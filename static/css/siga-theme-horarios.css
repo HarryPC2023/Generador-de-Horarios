@@ -107,7 +107,30 @@ html[data-tema="forest"] {
 body {
   font-family: 'Orbitron', sans-serif;
   background: linear-gradient(160deg, var(--siga-grad-1) 0%, var(--bg) 45%, var(--siga-grad-3) 100%);
+  background-size: 220% 220%;
+  animation: sigaBodyMover 14s ease-in-out infinite;
   transition: background-color 0.25s ease;
+}
+
+@keyframes sigaBodyMover {
+  0% {
+    background-position: 15% 25%;
+  }
+
+  50% {
+    background-position: 85% 75%;
+  }
+
+  100% {
+    background-position: 15% 25%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    animation: none;
+    background-position: 50% 50%;
+  }
 }
 
 .card-title,

@@ -21,8 +21,8 @@
 :root,
 html[data-tema="claro"] {
   --accent: #6600CC;
-  --accent-dim: rgba(171, 105, 237, 0.12);
-  --accent-dark: #b375ed;
+  --accent-dim: rgba(102, 0, 204, 0.12);
+  --accent-dark: #4f0099;
   --bg: #FFFDF9;
   --surface: #ffffff;
   --surface2: #FFFDF9;
@@ -33,14 +33,27 @@ html[data-tema="claro"] {
 
   /* Degradado de marca: azul -> LILA (dominante) -> morado, sin
      tramo blanco — el mismo que quedó en el rediseño de Intranotas,
-     para que ambas apps se sientan de la misma familia visual. */
-  --siga-grad-1: #EAF2FF;
+     para que ambas apps se sientan de la misma familia visual.
+     (--siga-grad-1/2/3 siguen alimentando la FRANJA SUPERIOR). */
+  --siga-grad-1: #D6F3FA;
   --siga-grad-2: #E4CAF6;
   --siga-grad-3: #F3EAFB;
   /* Punto medio para el FONDO GENERAL (no la franja superior): lila
      diluido con el fondo, no reemplazado por blanco puro — eso es
-     lo que hacía que se viera pálido antes. ~55% lila / 45% crema. */
+     lo que hacía que se viera pálido antes. ~55% lila / 45% crema.
+     (queda sin usar ahora que --siga-body-grad de abajo lo reemplaza,
+     se deja definida por si se quiere volver a este estilo). */
   --siga-grad-mid: #ECD9F7;
+
+  /* FONDO GENERAL final, afinado a mano en vivo con DevTools:
+     cian -> magenta en diagonal, cada color "aguanta" su mitad
+     (paradas duras en 26%/78%) antes de mezclarse en el centro,
+     con transparencia baja para que quede sutil, no saturado. */
+  --siga-body-grad: linear-gradient(135deg,
+      rgba(0, 255, 255, 0.13) 0%,
+      rgba(0, 255, 255, 0.13) 26%,
+      rgba(204, 0, 255, 0.2) 78%,
+      rgba(204, 0, 255, 0.2) 100%);
 }
 
 html[data-tema="oscuro"] {
@@ -65,6 +78,7 @@ html[data-tema="oscuro"] {
   --siga-grad-2: #3a2657;
   --siga-grad-3: #1c1428;
   --siga-grad-mid: #2A1E3E;
+  --siga-body-grad: linear-gradient(160deg, var(--siga-grad-1) 0%, var(--siga-grad-mid) 45%, var(--siga-grad-3) 100%);
 }
 
 html[data-tema="ocean"] {
@@ -83,6 +97,7 @@ html[data-tema="ocean"] {
   --siga-grad-2: #A5F3FC;
   --siga-grad-3: #E0F7FB;
   --siga-grad-mid: #C8F6FB;
+  --siga-body-grad: linear-gradient(160deg, var(--siga-grad-1) 0%, var(--siga-grad-mid) 45%, var(--siga-grad-3) 100%);
 }
 
 html[data-tema="forest"] {
@@ -101,6 +116,7 @@ html[data-tema="forest"] {
   --siga-grad-2: #BBF7D0;
   --siga-grad-3: #ECFDF3;
   --siga-grad-mid: #D3F7DE;
+  --siga-body-grad: linear-gradient(160deg, var(--siga-grad-1) 0%, var(--siga-grad-mid) 45%, var(--siga-grad-3) 100%);
 }
 
 /* La FORMA no cambia entre tonos ni respecto a la app original —
@@ -113,8 +129,8 @@ html[data-tema="forest"] {
 
 body {
   font-family: 'Orbitron', sans-serif;
-  background: linear-gradient(160deg, var(--siga-grad-1) 0%, var(--siga-grad-mid) 45%, var(--siga-grad-3) 100%);
-  background-size: 220% 220%;
+  background: var(--siga-body-grad);
+  background-size: 200% 200%;
   animation: sigaBodyMover 14s ease-in-out infinite;
   transition: background-color 0.25s ease;
 }

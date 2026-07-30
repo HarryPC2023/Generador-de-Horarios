@@ -21,8 +21,8 @@
 :root,
 html[data-tema="claro"] {
   --accent: #6600CC;
-  --accent-dim: rgba(102, 0, 204, 0.12);
-  --accent-dark: #4f0099;
+  --accent-dim: rgba(171, 105, 237, 0.12);
+  --accent-dark: #b375ed;
   --bg: #FFFDF9;
   --surface: #ffffff;
   --surface2: #FFFDF9;

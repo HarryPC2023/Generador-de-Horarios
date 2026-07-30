@@ -6,13 +6,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Generador de Horarios - Generador</title>
+
+  <!-- Anti-flash de tema: aplica el tono guardado ANTES del primer
+       pintado (misma clave que usa index.html, así el tono viaja
+       de una pantalla a la otra). Debe ir lo más arriba posible. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('horarioGen_tema') || 'claro';
+        document.documentElement.setAttribute('data-tema', t);
+      } catch (e) { }
+    })();
+  </script>
+
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="static/css/style.css">
+  <!-- Tipografía de marca SIGA: Orbitron para todo el texto, Black Ops
+       One solo para el wordmark (ver .sidebar-logo-text en siga-theme-horarios.css) -->
   <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Orbitron:wght@500;600;700&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="css/siga-theme-horarios.css">
+  <link rel="stylesheet" href="static/css/style.css">
+  <link rel="stylesheet" href="static/css/siga-theme-horarios.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <!-- JSZip: para inyectar orientación/ajuste de página en el .xlsx exportado,
        ya que xlsx-js-style no soporta escribir esa configuración -->
@@ -20,9 +35,35 @@
 </head>
 
 <body>
+
+  <!-- ═══ BARRA SIGA — fila propia, fuera del layout de la app ═══
+       No es position:fixed a propósito: al vivir en el flujo normal
+       empuja el gen-layout hacia abajo por construcción (el CSS le
+       resta su alto), así que nunca puede quedar tapada por nada. -->
   <div class="siga-topbar">
-    <a href="https://harrypc2023.github.io/portal-siga/dashboard.html">← Volver a SIGA</a>
+    <a href="https://harrypc2023.github.io/portal-siga/dashboard.html" class="siga-topbar-link">← Volver a SIGA</a>
+
+    <div class="tema-selector">
+      <button type="button" class="tema-boton" aria-haspopup="true" aria-expanded="false">
+        <span class="tema-boton-icono">☀️</span> Tema
+      </button>
+      <div class="tema-menu">
+        <button type="button" class="tema-opcion activo" data-tema="claro">
+          <span class="tema-swatch claro"></span> Claro
+        </button>
+        <button type="button" class="tema-opcion" data-tema="oscuro">
+          <span class="tema-swatch oscuro"></span> Oscuro
+        </button>
+        <button type="button" class="tema-opcion" data-tema="ocean">
+          <span class="tema-swatch ocean"></span> Ocean
+        </button>
+        <button type="button" class="tema-opcion" data-tema="forest">
+          <span class="tema-swatch forest"></span> Forest
+        </button>
+      </div>
+    </div>
   </div>
+
   <div class="gen-layout">
 
     <!-- SIDEBAR -->
@@ -32,8 +73,12 @@
           <img src="static/img/512x512.png" alt="Logo" class="logo-icon-img">
           <span class="sidebar-logo-text">Generador de Horarios</span>
         </div>
-        <!-- Antes era href="/" (ruta Flask), ahora apunta al archivo directamente -->
-        <a href="index.html" class="back-btn">← Volver</a>
+        <!-- Antes era href="/" (ruta Flask), ahora apunta al archivo directamente.
+             Renombrado de "← Volver" a "← Elegir cursos" (mismo href, mismo
+             comportamiento) para que no se confunda con la nueva barra
+             "← Volver a SIGA" de arriba — ambas empezaban con la misma
+             palabra y quedaban una encima de la otra en la lectura. -->
+        <a href="index.html" class="back-btn">← Elegir cursos</a>
       </div>
 
       <div class="sidebar-scroll">
@@ -153,6 +198,8 @@
   <script src="static/js/parser.js"></script>
   <script src="static/js/scheduler.js"></script>
   <script src="static/js/generador.js"></script>
+  <!-- Motor de temas SIGA (Claro/Oscuro/Ocean/Forest), compartido con index.html -->
+  <script src="static/js/tema-horarios.js"></script>
   <script>
     // Recupera los cursos seleccionados de la URL
     // Funciona igual que antes: index.html los pasa por ?curso=...

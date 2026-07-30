@@ -6,22 +6,64 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generador de Horarios - Inicio</title>
+
+    <!-- Anti-flash de tema: aplica el tono guardado ANTES del primer
+         pintado, para no mostrar un instante el tono anterior mientras
+         carga tema-horarios.js. Debe ir lo más arriba posible del head. -->
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('horarioGen_tema') || 'claro';
+                document.documentElement.setAttribute('data-tema', t);
+            } catch (e) { }
+        })();
+    </script>
+
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="static/css/style.css">
+    <!-- Tipografía de marca SIGA: Orbitron para todo el texto, Black Ops
+         One solo para el wordmark (ver .logo-title en siga-theme-horarios.css) -->
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Orbitron:wght@500;600;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="css/siga-theme-horarios.css">
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/siga-theme-horarios.css">
 
     <!-- SheetJS: equivale a openpyxl, lee el Excel en el navegador -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 
 <body class="page-index-body">
+
+    <!-- ═══ BARRA SIGA — fila propia, fuera del header de la app ═══
+         No es position:fixed a propósito: al vivir en el flujo normal
+         empuja el header hacia abajo por construcción, así que nunca
+         puede quedar tapada por "Generador de Horarios" ni por nada más. -->
     <div class="siga-topbar">
-        <a href="https://harrypc2023.github.io/portal-siga/dashboard.html">← Volver a SIGA</a>
+        <a href="https://harrypc2023.github.io/portal-siga/dashboard.html" class="siga-topbar-link">← Volver a
+            SIGA</a>
+
+        <div class="tema-selector">
+            <button type="button" class="tema-boton" aria-haspopup="true" aria-expanded="false">
+                <span class="tema-boton-icono">☀️</span> Tema
+            </button>
+            <div class="tema-menu">
+                <button type="button" class="tema-opcion activo" data-tema="claro">
+                    <span class="tema-swatch claro"></span> Claro
+                </button>
+                <button type="button" class="tema-opcion" data-tema="oscuro">
+                    <span class="tema-swatch oscuro"></span> Oscuro
+                </button>
+                <button type="button" class="tema-opcion" data-tema="ocean">
+                    <span class="tema-swatch ocean"></span> Ocean
+                </button>
+                <button type="button" class="tema-opcion" data-tema="forest">
+                    <span class="tema-swatch forest"></span> Forest
+                </button>
+            </div>
+        </div>
     </div>
+
     <div class="page-index" style="min-height: 100vh;">
 
         <!-- ═══ HEADER ═══ -->
@@ -115,6 +157,8 @@
     <!-- ── Scripts ── -->
     <!-- parser.js debe cargarse antes que este script -->
     <script src="static/js/parser.js"></script>
+    <!-- Motor de temas SIGA (Claro/Oscuro/Ocean/Forest), compartido con generador.html -->
+    <script src="static/js/tema-horarios.js"></script>
 
     <script>
         // ── Referencias al DOM ──────────────────────────────────

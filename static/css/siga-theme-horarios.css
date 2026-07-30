@@ -40,7 +40,7 @@ html[data-tema="claro"] {
   /* Punto medio para el FONDO GENERAL (no la franja superior): lila
      diluido con el fondo, no reemplazado por blanco puro — eso es
      lo que hacía que se viera pálido antes. ~55% lila / 45% crema. */
-  --siga-grad-mid: #F0E2F8;
+  --siga-grad-mid: #ECD9F7;
 }
 
 html[data-tema="oscuro"] {

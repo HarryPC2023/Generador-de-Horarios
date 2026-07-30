@@ -37,6 +37,10 @@ html[data-tema="claro"] {
   --siga-grad-1: #EAF2FF;
   --siga-grad-2: #E4CAF6;
   --siga-grad-3: #F3EAFB;
+  /* Punto medio para el FONDO GENERAL (no la franja superior): lila
+     diluido con el fondo, no reemplazado por blanco puro — eso es
+     lo que hacía que se viera pálido antes. ~55% lila / 45% crema. */
+  --siga-grad-mid: #F0E2F8;
 }
 
 html[data-tema="oscuro"] {
@@ -60,6 +64,7 @@ html[data-tema="oscuro"] {
   --siga-grad-1: #241b35;
   --siga-grad-2: #3a2657;
   --siga-grad-3: #1c1428;
+  --siga-grad-mid: #2A1E3E;
 }
 
 html[data-tema="ocean"] {
@@ -77,6 +82,7 @@ html[data-tema="ocean"] {
   --siga-grad-1: #CFFAFE;
   --siga-grad-2: #A5F3FC;
   --siga-grad-3: #E0F7FB;
+  --siga-grad-mid: #C8F6FB;
 }
 
 html[data-tema="forest"] {
@@ -94,6 +100,7 @@ html[data-tema="forest"] {
   --siga-grad-1: #DCFCE7;
   --siga-grad-2: #BBF7D0;
   --siga-grad-3: #ECFDF3;
+  --siga-grad-mid: #D3F7DE;
 }
 
 /* La FORMA no cambia entre tonos ni respecto a la app original —
@@ -106,7 +113,7 @@ html[data-tema="forest"] {
 
 body {
   font-family: 'Orbitron', sans-serif;
-  background: linear-gradient(160deg, var(--siga-grad-1) 0%, var(--bg) 45%, var(--siga-grad-3) 100%);
+  background: linear-gradient(160deg, var(--siga-grad-1) 0%, var(--siga-grad-mid) 45%, var(--siga-grad-3) 100%);
   background-size: 220% 220%;
   animation: sigaBodyMover 14s ease-in-out infinite;
   transition: background-color 0.25s ease;

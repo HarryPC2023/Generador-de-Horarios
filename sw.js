@@ -2,7 +2,7 @@
 // sw.js — Service Worker
 // Permite instalación como PWA y funcionamiento offline
 // ============================================================
-const CACHE_NAME = 'horariogen-v43';
+const CACHE_NAME = 'horariogen-v44';
  
 // Lista de archivos que se guardan en caché al instalar la app
 const ARCHIVOS_CACHE = [

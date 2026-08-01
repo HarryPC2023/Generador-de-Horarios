@@ -95,13 +95,14 @@ html[data-tema="oscuro"] {
   --siga-grad-mid: #2A1E3E;
   --siga-body-grad: linear-gradient(160deg, var(--siga-grad-2) 0%, var(--siga-grad-mid) 50%, var(--siga-grad-3) 100%);
 
-  /* Morado propio del tema, con la misma intensidad de contraste
-     que usa Intranotas en su body.tema-dark. */
+  /* IDÉNTICO a siga-theme-intranotas.css body.tema-dark — mismos
+     valores rgba exactos, no una variación propia, para que el
+     degradado se vea igual en las dos apps. */
   --siga-body-overlay: linear-gradient(135deg,
-      rgba(168, 85, 247, 0.30) 0%,
-      rgba(168, 85, 247, 0.30) 26%,
-      rgba(76, 29, 149, 0.65) 78%,
-      rgba(76, 29, 149, 0.65) 100%);
+      rgba(77, 208, 225, 0.40) 0%,
+      rgba(77, 208, 225, 0.40) 26%,
+      rgba(100, 181, 246, 0.12) 78%,
+      rgba(100, 181, 246, 0.12) 100%);
 }
 
 html[data-tema="ocean"] {
@@ -122,11 +123,12 @@ html[data-tema="ocean"] {
   --siga-grad-mid: #C8F6FB;
   --siga-body-grad: linear-gradient(160deg, var(--siga-grad-2) 0%, var(--siga-grad-mid) 45%, var(--siga-grad-3) 100%);
 
+  /* IDÉNTICO a siga-theme-intranotas.css body.tema-ocean. */
   --siga-body-overlay: linear-gradient(135deg,
-      rgba(101, 238, 241, 0.22) 0%,
-      rgba(101, 238, 241, 0.22) 26%,
-      rgba(8, 145, 178, 0.55) 78%,
-      rgba(8, 145, 178, 0.55) 100%);
+      rgba(101, 238, 241, 0.18) 0%,
+      rgba(101, 238, 241, 0.18) 26%,
+      rgba(29, 78, 216, 0.60) 78%,
+      rgba(29, 78, 216, 0.60) 100%);
 }
 
 html[data-tema="forest"] {
@@ -147,11 +149,12 @@ html[data-tema="forest"] {
   --siga-grad-mid: #D3F7DE;
   --siga-body-grad: linear-gradient(160deg, var(--siga-grad-2) 0%, var(--siga-grad-mid) 50%, var(--siga-grad-3) 100%);
 
+  /* IDÉNTICO a siga-theme-intranotas.css body.tema-forest. */
   --siga-body-overlay: linear-gradient(135deg,
-      rgba(171, 221, 95, 0.22) 0%,
-      rgba(171, 221, 95, 0.22) 26%,
-      rgba(22, 163, 74, 0.60) 78%,
-      rgba(22, 163, 74, 0.60) 100%);
+      rgba(171, 221, 95, 0.20) 0%,
+      rgba(171, 221, 95, 0.20) 26%,
+      rgba(42, 161, 18, 0.74) 78%,
+      rgba(42, 161, 18, 0.74) 100%);
 }
 
 /* La FORMA no cambia entre tonos ni respecto a la app original —

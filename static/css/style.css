@@ -1693,3 +1693,115 @@ body.page-index-body {
   background: linear-gradient(135deg, #9900FF, #7a00cc);
   color: #fff;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   SISTEMA DE TEMAS + DEGRADADO ANIMADO (mismo mecanismo que Intranotas)
+   ══════════════════════════════════════════════════════════════ */
+
+@keyframes horarioGenFondoMovimiento {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+body {
+  background: linear-gradient(135deg, var(--grad-start, var(--bg)) 0%, var(--grad-end, var(--surface2)) 100%);
+  background-size: 400% 400%;
+  animation: horarioGenFondoMovimiento 18s ease infinite;
+  transition: background-color 0.4s ease;
+}
+
+/* ── Selector de tema (dropdown) ─────────────────────────────── */
+.idx-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tema-selector {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tema-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tema-trigger:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.tema-caret {
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+.tema-opciones {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  min-width: 150px;
+  z-index: 500;
+}
+
+.tema-opciones.abierto {
+  display: block;
+}
+
+.tema-opcion {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 14px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tema-opcion:hover {
+  background: var(--surface2);
+}
+
+.tema-opcion.activo {
+  background: var(--accent-dim);
+  color: var(--accent-dark);
+}
+
+@media (max-width: 480px) {
+  #temaLabelActivo {
+    display: none;
+  }
+}

@@ -1,46 +1,28 @@
 // ============================================================
 // sw.js — Service Worker
-// Permite instalación como PWA y funcionamiento offline
+// App retirada: esta versión solo sirve la pantalla de
+// redirección a SIGA. Ya no cachea el motor del generador.
 // ============================================================
-const CACHE_NAME = 'horariogen-v46';
- 
-// Lista de archivos que se guardan en caché al instalar la app
+const CACHE_NAME = 'horariogen-v47-retirado';
+
+// Solo se cachean las páginas de bloqueo y el manifest.
 const ARCHIVOS_CACHE = [
   'index.html',
   'generador.html',
-  'static/css/style.css',
-  'static/css/siga-theme-horarios.css',
-  'static/js/parser.js',
-  'static/js/scheduler.js',
-  'static/js/generador.js',
-  'static/js/tema-horarios.js',   
-  'static/img/512x512.png',
-  'static/img/harry.png',
   'manifest.json'
 ];
- 
-// ── INSTALL: guarda todos los archivos en caché ──────────────
+
+// ── INSTALL: guarda los archivos de la pantalla de bloqueo ──
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(ARCHIVOS_CACHE))
-    // OJO: ya no se llama a self.skipWaiting() aquí.
-    // La nueva versión se queda "esperando" hasta que la página
-    // se lo pida (ver mensaje 'SKIP_WAITING' abajo), así el usuario
-    // decide cuándo actualizar en vez de que pase de golpe.
+      .then(() => self.skipWaiting())
   );
 });
 
-// ── ACTUALIZACIÓN BAJO DEMANDA ────────────────────────────────
-// El front-end (index.html / generador.html) envía este mensaje
-// cuando el usuario pulsa "Actualizar ahora" en el aviso de nueva versión.
-self.addEventListener('message', event => {
-  if (event.data === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
- 
-// ── ACTIVATE: limpia cachés viejas ───────────────────────────
+// ── ACTIVATE: limpia TODAS las cachés viejas (incluye las del
+// generador completo que ya no existen) y toma control inmediato ──
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -52,32 +34,23 @@ self.addEventListener('activate', event => {
     ).then(() => self.clients.claim())
   );
 });
- 
-// ── FETCH: red primero, caché como respaldo ──────────────────
-// Siempre intenta la red primero y actualiza el caché.
-// Solo usa caché si no hay conexión.
+
+// ── FETCH: red primero, caché de la pantalla de bloqueo como respaldo ──
 self.addEventListener('fetch', event => {
   const url = event.request.url;
- 
-  // Ignorar peticiones que no sean GET
+
   if (event.request.method !== 'GET') return;
- 
-  // Ignorar chrome-extension y otros esquemas no http
   if (!url.startsWith('http')) return;
- 
+
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        // Si la respuesta es válida, actualiza el caché
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return response;
       })
-      .catch(() => {
-        // Sin conexión: sirve desde caché
-        return caches.match(event.request);
-      })
+      .catch(() => caches.match(event.request))
   );
 });

@@ -3,7 +3,7 @@
 // App retirada: esta versión solo sirve la pantalla de
 // redirección a SIGA. Ya no cachea el motor del generador.
 // ============================================================
-const CACHE_NAME = 'horariogen-v47-retirado';
+const CACHE_NAME = 'horariogen-v49-retirado';
 
 // Solo se cachean las páginas de bloqueo y el manifest.
 const ARCHIVOS_CACHE = [
